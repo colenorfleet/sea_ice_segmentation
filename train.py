@@ -4,26 +4,19 @@ import sys
 import csv
 import torch
 import albumentations as A
-from dataset_utils import craft_datasetdict, collate_fn, SegmentationDataset, Dinov2forSemanticSegmentation
+from utils.dataset_utils import craft_datasetdict, collate_fn, SegmentationDataset
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 from torch.optim import AdamW
-# import evaluate
-import numpy as np
-from model.unet_brain_seg import UNet as UNetBrainSeg
-from lossfn_utils import DiceLoss
-from torchvision.models.segmentation import deeplabv3_resnet50
-from transformers import Dinov2Model
-from dino_utils import SegmentationHead, DinoBinarySeg
-from torchvision.models.segmentation.deeplabv3 import DeepLabV3_ResNet50_Weights
-
-from segmentation_models_pytorch import PSPNet, DeepLabV3Plus, Unet, DeepLabV3
+from transformers import Dinov2Model, SegformerForSemanticSegmentation, SegformerImageProcessor
+from utils.dino_utils import DinoBinarySeg
+from segmentation_models_pytorch import DeepLabV3Plus, Unet
 
 
 
 ### define parameters
 
-# "dinov2" or "deeplabv3" or "unet"
+# "dinov2" or "deeplabv3plus" or "unet"
 architecture = sys.argv[1]
 dataset_name = sys.argv[2]
 num_epochs = int(sys.argv[3])
@@ -53,19 +46,19 @@ dataset = craft_datasetdict(image_dir, label_dir, mask_dir, filename_split_dir)
 
 ADE_MEAN = [0.4684301, 0.47295512, 0.47658848]
 ADE_STD = [0.20301826, 0.19884902, 0.1973144]
-img_size = 448
+img_size = 512
 
-
+# A.HorizontalFlip(p=0.5),
+# A.Normalize(mean=ADE_MEAN, std=ADE_STD)],
 train_transform = A.Compose([
         A.Resize(width=img_size, height=img_size),
-        # A.HorizontalFlip(p=0.5),
-        A.Normalize(mean=ADE_MEAN, std=ADE_STD)],
-        additional_targets={"lidar_mask": "mask"})
+        A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ], additional_targets={"lidar_mask": "mask"})
 
 val_transform = A.Compose([
         A.Resize(width=img_size, height=img_size),
-        A.Normalize(mean=ADE_MEAN, std=ADE_STD)],
-        additional_targets={"lidar_mask": "mask"})
+        A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ], additional_targets={"lidar_mask": "mask"})
 
 train_dataset = SegmentationDataset(dataset["train"], transform=train_transform)
 val_dataset = SegmentationDataset(dataset["val"], transform=val_transform)
@@ -74,48 +67,33 @@ train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True
 val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn)
 
 ### define model
-
+'''
 if architecture == 'dinov2':
     
     dinov2_encoder = Dinov2Model.from_pretrained("facebook/dinov2-base")
     deeplabv3plus_decoder = DeepLabV3Plus(encoder_name='resnet50', encoder_weights='imagenet', in_channels=3, classes=1)
 
-    # deeplab_decoder = deeplabv3_resnet50(weights=DeepLabV3_ResNet50_Weights.DEFAULT)
-
-    # deeplab_decoder.classifier[4] = torch.nn.Conv2d(256, 1, kernel_size=(1, 1), stride=(1, 1))
-    # deeplab_decoder.aux_classifier[4] = torch.nn.Conv2d(256, 1, kernel_size=(1, 1), stride=(1, 1))
-
-    # dinov2_encoder = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitb14')
     for param in dinov2_encoder.parameters():
         param.requires_grad = False
-    # dinov2_encoder.load_state_dict(torch.load('dinov2_vitb14_voc2012_linear_head.pth'))
-
-    # segmentation_head = SegmentationHead(in_channels=768, num_classes=1)
+    
     model = DinoBinarySeg(encoder=dinov2_encoder, decoder=deeplabv3plus_decoder)
+'''
+if architecture == 'segformer':
 
-elif architecture == 'deeplabv3':
-    ### DEEPLABV3
+    model = SegformerForSemanticSegmentation.from_pretrained("nvidia/segformer-b0-finetuned-ade-512-512",
+    num_labels=1,
+    ignore_mismatched_sizes=True,
+    )
 
-    model = DeepLabV3(encoder_name='resnet50', encoder_weights='imagenet', in_channels=3, classes=1)
-    # model = torch.hub.load('pytorch/vision:v0.10.0', 'deeplabv3_resnet50', weights=DeepLabV3_ResNet50_Weights.DEFAULT)
-    # model.classifier[4] = torch.nn.Conv2d(256, 1, kernel_size=(1, 1), stride=(1, 1))
-    # model.aux_classifier[4] = torch.nn.Conv2d(256, 1, kernel_size=(1, 1), stride=(1, 1))
-    # model.load_state_dict(torch.load('best_deeplabv3_resnet50.pth'))
+    model.config.num_labels = 1
+    model.config.semantic_loss_ignore_index = -1
 
-elif architecture == 'unet_brain':
-    ### UNET
-    model = UNetBrainSeg(in_channels=3, out_channels=1, init_features=32)
-    model.load_state_dict(torch.load('./pretrained/brain_seg_pretrained.pth'))
-
-elif architecture == 'pspnet':
-
-    model = PSPNet(encoder_name='resnet50', encoder_weights='imagenet', in_channels=3, classes=1)
 
 elif architecture == 'deeplabv3plus':
 
     model = DeepLabV3Plus(encoder_name='resnet50', encoder_weights='imagenet', in_channels=3, classes=1)
 
-elif architecture == 'unet_smp':
+elif architecture == 'unet':
 
     model = Unet(encoder_name='resnet50', encoder_weights='imagenet', in_channels=3, classes=1)
 
@@ -123,12 +101,7 @@ elif architecture == 'unet_smp':
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 ## EVALUATE
-# train_metrics = evaluate.combine(["mean_iou", "accuracy"])
-# eval_metrics = evaluate.combine(["mean_iou", "accuracy"])
-
-# criterion = DiceLoss(model=model)
-# criterion = torch.nn.CrossEntropyLoss()
-criterion = torch.nn.BCEWithLogitsLoss()
+criterion = torch.nn.BCEWithLogitsLoss(reduction='none')
 
 model.to(device)
 #optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-6)
@@ -171,38 +144,36 @@ with open(csv_file, "w+", newline="") as f:
             label = batch["label"].to(device)
             mask = batch["mask"].to(device)
 
-
             # forward pass
-            output = model(image)
-          
-            #if architecture == 'deeplabv3':
-            #    output = output["out"]
+            if architecture == 'segformer':
+                outputs = model(pixel_values=image)
+                logits = outputs.logits
 
+                # Upsample
+                logits = torch.nn.functional.interpolate(logits, size=(512, 512), mode='bilinear', align_corners=False)
 
-            # calculate loss
-            # train_metrics.add_batch(predictions=output, references=label)
+            else:
+                logits = model(image)
 
-            output = output.squeeze() * mask
-            label = label * mask
+            logits = logits.squeeze(1)
+            loss = criterion(logits, label.float())
+            loss = loss * mask
 
-            t_loss = criterion(output, label.float()) #, mask)
-            t_loss.backward()
+            mean_loss = loss.sum() / mask.sum()
+                
+            mean_loss.backward()
             optimizer.step()
 
             optimizer.zero_grad()
 
-            running_train_loss += t_loss.item()
+            running_train_loss += mean_loss.item()
 
             # update progress bar
             train_dataloader.set_postfix(
-                loss=t_loss.item()
+                loss=mean_loss.item()
             )
 
         avg_train_loss = running_train_loss / len(train_dataloader)
-
-        # train_met = train_metrics.compute(num_labels=1)
-        # print(f"Train Loss: {train_met['mean_iou']:.4f}")
-
 
         ### validation loop
         model.eval()
@@ -217,26 +188,27 @@ with open(csv_file, "w+", newline="") as f:
                 label = batch["label"].to(device)
                 mask = batch["mask"].to(device)
 
-                output = model(image)
+                # forward pass
+                if architecture == 'segformer':
+                    outputs = model(pixel_values=image)
+                    logits = outputs.logits
+                    # Upsample
+                    logits = torch.nn.functional.interpolate(logits, size=(512, 512), mode='bilinear', align_corners=False)
+                else:
+                    logits = model(image)
 
-                #if architecture == 'deeplabv3':
-                #    output = output["out"]
+                logits = logits.squeeze(1)    
+                v_loss = criterion(logits, label.float())
+                v_loss = v_loss * mask
 
-                # eval_metrics.add_batch(predictions=output, references=label)
-
-                output = output.squeeze() * mask
-                label = label * mask
-
-                v_loss = criterion(output, label.float())#, mask)
-                running_val_loss += v_loss.item()
+                mean_v_loss = v_loss.sum() / mask.sum()
+                running_val_loss += mean_v_loss.item()
 
                 # update progress bar
                 validation_dataloader.set_postfix(
-                    val_loss=v_loss.item()
+                    val_loss=mean_v_loss.item()
                 )
 
-        # eval_met = eval_metrics.compute(num_labels=1)
-        # print(f"Validation Loss: {eval_met['mean_iou']:.4f}")
         avg_val_loss = running_val_loss / len(validation_dataloader)
 
         # scheduler.step(avg_val_loss)

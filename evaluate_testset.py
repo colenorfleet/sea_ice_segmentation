@@ -3,8 +3,8 @@ import os
 import sys
 import csv
 import torch
-from dataset_utils import craft_datasetdict, collate_fn, SegmentationDataset
-from dino_utils import SegmentationHead, DinoBinarySeg
+from utils.dataset_utils import craft_datasetdict, collate_fn, SegmentationDataset
+from utils.dino_utils import SegmentationHead, DinoBinarySeg
 import albumentations as A
 from torch.utils.data import DataLoader
 from model.unet_brain_seg import UNet as UNetBrainSeg
@@ -12,8 +12,8 @@ from torchvision.models.segmentation import deeplabv3_resnet50
 from torchvision.models.segmentation.deeplabv3 import DeepLabV3_ResNet50_Weights
 from tqdm.auto import tqdm
 from transformers import Dinov2Model
-from lossfn_utils import calculate_metrics, calc_SIC
-from plotting_utils import save_segmentation_image
+from utils.lossfn_utils import calculate_metrics, calc_SIC
+from utils.plotting_utils import save_segmentation_image
 from segmentation_models_pytorch import PSPNet, DeepLabV3Plus, Unet, DeepLabV3
 
 
@@ -54,43 +54,19 @@ data_directory = os.path.join('./output', architecture, dataset_name)
 
 if architecture == 'dinov2':
     ### DINOV2
-    # create id2label for dinov2
     dinov2_encoder = Dinov2Model.from_pretrained("facebook/dinov2-base")
-    deeplab_decoder = deeplabv3_resnet50(weights=DeepLabV3_ResNet50_Weights.DEFAULT)
+    deeplabv3plus_decoder = DeepLabV3Plus(encoder_name='resnet50', encoder_weights='imagenet', in_channels=3, classes=1)
 
-    deeplab_decoder.classifier[4] = torch.nn.Conv2d(256, 1, kernel_size=(1, 1), stride=(1, 1))
-    deeplab_decoder.aux_classifier[4] = torch.nn.Conv2d(256, 1, kernel_size=(1, 1), stride=(1, 1))
-
-    # dinov2_encoder = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitb14')
     for param in dinov2_encoder.parameters():
         param.requires_grad = False
-    # dinov2_encoder.load_state_dict(torch.load('dinov2_vitb14_voc2012_linear_head.pth'))
-
-    # segmentation_head = SegmentationHead(in_channels=768, num_classes=1)
-    model = DinoBinarySeg(encoder=dinov2_encoder, decoder=deeplab_decoder.classifier)
-
-elif architecture == 'deeplabv3':
-    ### DEEPLABV3
-    model = DeepLabV3(encoder_name='resnet50', encoder_weights='imagenet', in_channels=3, classes=1)
-    #model = torch.hub.load('pytorch/vision:v0.10.0', 'deeplabv3_resnet50', weights=DeepLabV3_ResNet50_Weights.DEFAULT)
-    #model.classifier[4] = torch.nn.Conv2d(256, 1, kernel_size=(1, 1), stride=(1, 1))
-    #model.aux_classifier[4] = torch.nn.Conv2d(256, 1, kernel_size=(1, 1), stride=(1, 1))
-    # model.load_state_dict(torch.load('best_deeplabv3_resnet50.pth'))
-
-elif architecture == 'unet_brain':
-    ### UNET
-    model = UNetBrainSeg(in_channels=3, out_channels=1, init_features=32)
-    model.load_state_dict(torch.load('./pretrained/brain_seg_pretrained.pth'))
-
-elif architecture == 'pspnet':
-
-    model = PSPNet(encoder_name='resnet50', encoder_weights='imagenet', in_channels=3, classes=1)
-
+    
+    model = DinoBinarySeg(encoder=dinov2_encoder, decoder=deeplabv3plus_decoder)
+    
 elif architecture == 'deeplabv3plus':
 
     model = DeepLabV3Plus(encoder_name='resnet50', encoder_weights='imagenet', in_channels=3, classes=1)
 
-elif architecture == 'unet_smp':
+elif architecture == 'unet':
 
     model = Unet(encoder_name='resnet50', encoder_weights='imagenet', in_channels=3, classes=1)
 
@@ -146,19 +122,15 @@ with open(csv_file, "w", newline="") as f:
 
 
             # forward pass
-            output = model(image)
+            prediction = model(image)
 
-            #if architecture == 'deeplabv3':
-            #    output = output["out"]
-
-            output = output.squeeze() * mask
+            prediction = prediction.squeeze() * mask
             label = label * mask
 
-            t_loss = criterion(output, label.float()) #, mask)
+            t_loss = criterion(prediction, label.float()) #, mask)
 
             # calculate metrics
-
-            pred_mask = torch.where(output > 0.5, 1, 0)
+            pred_mask = torch.where(prediction > 0.5, 1, 0)
             iou, dice_coefficient, pixel_accuracy, foreground_accuracy, background_accuracy, false_negative_rate, num_TP, num_FP, num_TN, num_FN, f1_score = calculate_metrics(pred_mask, label, mask)
             sic_label = calc_SIC(label, mask)
             sic_pred = calc_SIC(pred_mask, mask)
