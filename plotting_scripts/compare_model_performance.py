@@ -31,23 +31,16 @@ def compare_model_performance(model_name, dataset_name, metric='iou'):
         models = os.listdir('/home/cole/Documents/NTNU/sea_ice_segmentation/test_data_output')
 
         # get all models performance
-        unet_eval_scores = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/test_data_output/unet_brain/{dataset_name}/evaluation_scores.csv')
-        deeplabv3_eval_scores = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/test_data_output/deeplabv3/{dataset_name}/evaluation_scores.csv')
-        dinov2_eval_scores = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/test_data_output/dinov2/{dataset_name}/evaluation_scores.csv')
-        pspnet_eval_scores = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/test_data_output/pspnet/{dataset_name}/evaluation_scores.csv')
+        unet_eval_scores = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/test_data_output/unet/{dataset_name}/evaluation_scores.csv')
         deeplabv3plus_eval_scores = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/test_data_output/deeplabv3plus/{dataset_name}/evaluation_scores.csv')
-        unet_smp_eval_scores = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/test_data_output/unet_smp/{dataset_name}/evaluation_scores.csv')
+        segformer_eval_scores = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/test_data_output/segformer/{dataset_name}/evaluation_scores.csv')
 
 
         plt.title(f"Performance of all models on dataset: {dataset_name} with metric: {metric}")
 
         plt.plot(unet_eval_scores[input_dict[metric]], label=f'unet {input_dict[metric]}, mean: {unet_eval_scores[input_dict[metric]].mean():.4f}')
-        plt.plot(deeplabv3_eval_scores[input_dict[metric]], label=f'deeplabv3 {input_dict[metric]}, mean: {deeplabv3_eval_scores[input_dict[metric]].mean():.4f}')
-        plt.plot(dinov2_eval_scores[input_dict[metric]], label=f'dinov2 {input_dict[metric]}, mean: {dinov2_eval_scores[input_dict[metric]].mean():.4f}')
-        plt.plot(pspnet_eval_scores[input_dict[metric]], label=f'pspnet {input_dict[metric]}, mean: {pspnet_eval_scores[input_dict[metric]].mean():.4f}')
         plt.plot(deeplabv3plus_eval_scores[input_dict[metric]], label=f'deeplabv3plus {input_dict[metric]}, mean: {deeplabv3plus_eval_scores[input_dict[metric]].mean():.4f}')
-        plt.plot(unet_smp_eval_scores[input_dict[metric]], label=f'unet_smp {input_dict[metric]}, mean: {unet_smp_eval_scores[input_dict[metric]].mean():.4f}')
-
+        plt.plot(segformer_eval_scores[input_dict[metric]], label=f'segformer {input_dict[metric]}, mean: {segformer_eval_scores[input_dict[metric]].mean():.4f}')
 
         # plt.plot(unet_eval_scores['SIC Label, %'] / 100, label='SIC, Label')
         

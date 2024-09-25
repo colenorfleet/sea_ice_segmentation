@@ -44,8 +44,8 @@ dataset = craft_datasetdict(image_dir, label_dir, mask_dir, filename_split_dir)
 ### NEED TO CHECK: are all input images in the range [0,1]?
 # Can use AutoImageProcessor to see (from transformers)
 
-ADE_MEAN = [0.4684301, 0.47295512, 0.47658848]
-ADE_STD = [0.20301826, 0.19884902, 0.1973144]
+ADE_MEAN = [0.4685, 0.4731, 0.4766]
+ADE_STD = [0.2034, 0.1987, 0.1968]
 img_size = 512
 
 # A.HorizontalFlip(p=0.5),

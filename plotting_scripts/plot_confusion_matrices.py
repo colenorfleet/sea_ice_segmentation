@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 def plot_condusion_matrices():
 
-    models = {'unet_brain', 'deeplabv3', 'dinov2', 'pspnet', 'deeplabv3plus', 'unet_smp'}
+    models = {'unet', 'deeplabv3plus', 'segformer'}
 
     for model in models:
 
@@ -54,7 +54,7 @@ def plot_condusion_matrices():
         ax.set_title(f'Average Confusion Matrix Values for {model}')
         ax.set_xticks(x + width, ['True Positive', 'False Positive', 'True Negative', 'False Negative'])
         ax.legend(loc='upper left', ncols=4)
-        ax.set_ylim(0, 200000)
+        ax.set_ylim(0, 260000)
 
 
         plt.savefig(f'/home/cole/Documents/NTNU/sea_ice_segmentation/metric_plots/evaluating/confusion_matrices/{model}_confusion_matrix.png')

@@ -35,8 +35,8 @@ filename_split_dir = dataset_path
 dataset = craft_datasetdict(image_dir, label_dir, mask_dir, filename_split_dir)
 
 
-ADE_MEAN = [0.4684301, 0.47295512, 0.47658848]
-ADE_STD = [0.20301826, 0.19884902, 0.1973144]
+ADE_MEAN = [0.4685, 0.4731, 0.4766]
+ADE_STD = [0.2034, 0.1987, 0.1968]
 img_size = 512
 
 
@@ -74,7 +74,7 @@ if architecture == 'segformer':
 
 elif architecture == 'deeplabv3plus':
 
-    model = DeepLabV3Plus(encoder_name='resnet50', encoder_weights='imagenet', in_channels=3, classes=1)
+    model = DeepLabV3Plus(encoder_name='resnet101', encoder_weights='imagenet', in_channels=3, classes=1)
 
 elif architecture == 'unet':
 

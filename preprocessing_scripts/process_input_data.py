@@ -8,7 +8,7 @@ from tqdm import tqdm
 dataset_path = '/home/cole/Documents/NTNU/big_dataset_june24/cole_dataset'
 output_path = '/home/cole/Documents/NTNU/datasets'
 
-img_size = 448
+img_size = 512
 
 assert 'topo' and 'mask' and 'real' in os.listdir(dataset_path), 'topo, mask, or real not in dataset folder'
 

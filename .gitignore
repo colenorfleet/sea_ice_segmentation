@@ -61,6 +61,7 @@ testing_scripts/
 pretrained/
 pre-cut/
 __pycache__/
+eval_run_logs/
 
 *.pyc
 
