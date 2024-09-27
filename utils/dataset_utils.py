@@ -55,7 +55,7 @@ def collate_fn(inputs):
 
     return batch
 
-def craft_datasetdict(img_path_dir, label_path_dir, mask_path_dir, split_path):
+def craft_datasetdict(img_path_dir, label_path_dir, mask_path_dir, split_path, cv_flag=False):
     
     image_paths_train, image_paths_val, image_paths_test = [],[],[]
     label_paths_train, label_paths_val, label_paths_test = [],[],[]
@@ -80,6 +80,18 @@ def craft_datasetdict(img_path_dir, label_path_dir, mask_path_dir, split_path):
             label_paths_test.append(label_path_dir + line.strip() + ".png")
             mask_paths_test.append(mask_path_dir + line.strip() + ".png")
             filenames_test.append(line.strip())
+
+    if cv_flag:
+        filenames_cv = filenames_train + filenames_val
+        image_paths_cv = image_paths_train + image_paths_val
+        label_paths_cv = label_paths_train + label_paths_val
+        mask_paths_cv = mask_paths_train + mask_paths_val
+        cv_train_dataset = create_dataset(image_paths_cv, label_paths_cv, mask_paths_cv, filenames_cv)
+
+        dataset = DatasetDict({"cv_train": cv_train_dataset, "val": None, "test": None})
+
+        return dataset
+
 
     train_dataset = create_dataset(image_paths_train, label_paths_train, mask_paths_train, filenames_train)
     val_dataset = create_dataset(image_paths_val, label_paths_val, mask_paths_val, filenames_val)

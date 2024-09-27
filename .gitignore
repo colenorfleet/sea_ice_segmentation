@@ -62,6 +62,7 @@ pretrained/
 pre-cut/
 __pycache__/
 eval_run_logs/
+cv_output/
 
 *.pyc
 

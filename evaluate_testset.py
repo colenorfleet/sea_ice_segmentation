@@ -68,16 +68,13 @@ if architecture == 'segformer':
     num_labels=1,
     ignore_mismatched_sizes=True,
     )
-
     model.config.num_labels = 1
     model.config.semantic_loss_ignore_index = -1
 
 elif architecture == 'deeplabv3plus':
-
     model = DeepLabV3Plus(encoder_name='resnet101', encoder_weights='imagenet', in_channels=3, classes=1)
 
 elif architecture == 'unet':
-
     model = Unet(encoder_name='resnet50', encoder_weights='imagenet', in_channels=3, classes=1)
 
 

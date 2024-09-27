@@ -105,3 +105,31 @@ def calc_SIC(label, lidar_mask):
     sic_lidar = (ice_pixels / total_pixels)
 
     return sic_lidar.item()
+
+
+def quick_metrics(pred_mask: Any, true_mask: Any, lidar_mask: Any) -> torch.Tensor:
+
+    # include LiDAR mask in computation
+    pred_mask = pred_mask * lidar_mask
+    true_mask = true_mask * lidar_mask
+    
+    pred_mask = pred_mask.float()
+    true_mask = true_mask.float()
+
+    intersection = torch.sum(pred_mask * true_mask)
+    union = torch.sum((pred_mask + true_mask) > 0.5)
+
+    # Add a small epsilon to the denominator to avoid division by zero
+    iou = (intersection + SMOOTH) / (union + SMOOTH)
+
+    # Calculate TP, FP, TN, FN
+    num_TP = torch.sum((pred_mask == 1) & (true_mask == 1))
+    num_FP = torch.sum((pred_mask == 1) & (true_mask == 0))
+    num_TN = torch.sum((pred_mask == 0) & (true_mask == 0))
+    num_FN = torch.sum((pred_mask == 0) & (true_mask == 1))
+
+    precision = num_TP.float() / (num_TP.float() + num_FP.float() + SMOOTH)
+    recall = num_TP.float() / (num_TP.float() + num_FN.float() + SMOOTH)
+    f1_score = 2 * (precision * recall) / (precision + recall + SMOOTH)
+
+    return iou.item(), f1_score.item()
