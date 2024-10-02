@@ -17,7 +17,7 @@ from segmentation_models_pytorch import DeepLabV3Plus, Unet
 architecture = sys.argv[1]
 num_epochs = int(sys.argv[2])
 batch_size = int(sys.argv[3])
-learning_rate = 1e-4
+learning_rate = 1e-3
 
 print(f"Architecture: {architecture}")
 print(f"Dataset: ALL DATASETS")
@@ -39,13 +39,16 @@ elif architecture == 'deeplabv3plus':
     model = DeepLabV3Plus(encoder_name='resnet101', encoder_weights='imagenet', in_channels=3, classes=1)
 
 elif architecture == 'unet':
-    model = Unet(encoder_name='resnet50', encoder_weights='imagenet', in_channels=3, classes=1)
+    model = Unet(encoder_name='resnet101', encoder_weights='imagenet', in_channels=3, classes=1)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
 criterion = torch.nn.BCEWithLogitsLoss(reduction='none')
 optimizer = AdamW(model.parameters(), lr=learning_rate)
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer, mode="min", factor=0.1, patience=3, verbose=True
+    )
 
 # Make output directories
 output_dir = os.path.join('./all_dataset_output', architecture)
@@ -212,7 +215,7 @@ with open(csv_file, "w+", newline="") as f:
             avg_val_iou = running_val_iou / len(validation_dataloader)
             avg_val_f1 = running_val_f1 / len(validation_dataloader)
 
-            # scheduler.step(avg_val_loss)
+            scheduler.step(avg_val_loss)
 
             print(
                 f"\nEpoch {epoch + 1}/{num_epochs}\n"

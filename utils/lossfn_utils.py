@@ -40,11 +40,15 @@ class DiceLoss(nn.Module):
 
 def calculate_metrics(pred_mask: Any, true_mask: Any, lidar_mask: Any) -> torch.Tensor:#, mask: Any) -> torch.Tensor:
 
+    assert torch.all((pred_mask==0) | (pred_mask==1)), "pred_mask must be binary"
+    assert torch.all((true_mask==0) | (true_mask==1)), "true_mask must be binary"
+    assert torch.all((lidar_mask==0) | (lidar_mask==1)), "lidar_mask must be binary"
     
     # include LiDAR mask in computation
-    pred_mask = pred_mask * lidar_mask
-    true_mask = true_mask * lidar_mask
-    
+    valid_lidar_mask = (lidar_mask == 1)
+    pred_mask = pred_mask[valid_lidar_mask]
+    true_mask = true_mask[valid_lidar_mask]
+
     pred_mask = pred_mask.float()
     true_mask = true_mask.float()
 
@@ -93,7 +97,7 @@ def calc_SIC(label, lidar_mask):
 
     img_size = label.size()[1] * label.size()[2]
 
-    label = label * lidar_mask
+    label = label[lidar_mask==1]
 
     # find # of pixels in LiDAR mask
     total_pixels = torch.sum(lidar_mask)
@@ -109,9 +113,16 @@ def calc_SIC(label, lidar_mask):
 
 def quick_metrics(pred_mask: Any, true_mask: Any, lidar_mask: Any) -> torch.Tensor:
 
+    pred_mask = torch.where(pred_mask > 0.5, 1, 0)
+
+    assert torch.all((pred_mask==0) | (pred_mask==1)), "pred_mask must be binary"
+    assert torch.all((true_mask==0) | (true_mask==1)), "true_mask must be binary"
+    assert torch.all((lidar_mask==0) | (lidar_mask==1)), "lidar_mask must be binary"
+
     # include LiDAR mask in computation
-    pred_mask = pred_mask * lidar_mask
-    true_mask = true_mask * lidar_mask
+    valid_lidar_mask = (lidar_mask == 1)
+    pred_mask = pred_mask[valid_lidar_mask]
+    true_mask = true_mask[valid_lidar_mask]
     
     pred_mask = pred_mask.float()
     true_mask = true_mask.float()

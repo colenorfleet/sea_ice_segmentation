@@ -75,7 +75,7 @@ elif architecture == 'deeplabv3plus':
     model = DeepLabV3Plus(encoder_name='resnet101', encoder_weights='imagenet', in_channels=3, classes=1)
 
 elif architecture == 'unet':
-    model = Unet(encoder_name='resnet50', encoder_weights='imagenet', in_channels=3, classes=1)
+    model = Unet(encoder_name='resnet101', encoder_weights='imagenet', in_channels=3, classes=1)
 
 
 model.load_state_dict(torch.load(os.path.join(data_directory, "best_ice_seg_model.pth")))

@@ -21,7 +21,7 @@ architecture = sys.argv[1]
 dataset_name = sys.argv[2]
 num_epochs = int(sys.argv[3])
 batch_size = int(sys.argv[4])
-learning_rate = 1e-4
+learning_rate = 1e-3
 
 print(f"Architecture: {architecture}")
 print(f"Dataset: {dataset_name}")
@@ -41,15 +41,11 @@ filename_split_dir = dataset_path
 dataset = craft_datasetdict(image_dir, label_dir, mask_dir, filename_split_dir)
 
 
-### NEED TO CHECK: are all input images in the range [0,1]?
-# Can use AutoImageProcessor to see (from transformers)
-
 ADE_MEAN = [0.4685, 0.4731, 0.4766]
 ADE_STD = [0.2034, 0.1987, 0.1968]
 img_size = 512
 
-# A.HorizontalFlip(p=0.5),
-# A.Normalize(mean=ADE_MEAN, std=ADE_STD)],
+
 train_transform = A.Compose([
         A.Resize(width=img_size, height=img_size),
         A.HorizontalFlip(p=0.5),
@@ -84,7 +80,7 @@ elif architecture == 'deeplabv3plus':
     model = DeepLabV3Plus(encoder_name='resnet101', encoder_weights='imagenet', in_channels=3, classes=1)
 
 elif architecture == 'unet':
-    model = Unet(encoder_name='resnet50', encoder_weights='imagenet', in_channels=3, classes=1)
+    model = Unet(encoder_name='resnet101', encoder_weights='imagenet', in_channels=3, classes=1)
 
 ###
 
@@ -93,11 +89,10 @@ model.to(device)
 
 ## EVALUATE
 criterion = torch.nn.BCEWithLogitsLoss(reduction='none')
-#optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-6)
 optimizer = AdamW(model.parameters(), lr=learning_rate)
-#scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-#        optimizer, mode="min", factor=0.1, patience=3, verbose=True
-#    )
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer, mode="min", factor=0.1, patience=3, verbose=True
+    )
 
 # Make output directories
 output_dir = os.path.join('./output', architecture, dataset_name)
@@ -224,7 +219,7 @@ with open(csv_file, "w+", newline="") as f:
         avg_val_iou = running_val_iou / len(validation_dataloader)
         avg_val_f1 = running_val_f1 / len(validation_dataloader)
 
-        # scheduler.step(avg_val_loss)
+        scheduler.step(avg_val_loss)
 
         print(
             f"\nEpoch {epoch + 1}/{num_epochs}\n"

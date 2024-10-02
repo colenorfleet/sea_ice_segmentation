@@ -63,6 +63,7 @@ pre-cut/
 __pycache__/
 eval_run_logs/
 cv_output/
+all_dataset_output/
 
 *.pyc
 

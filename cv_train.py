@@ -96,7 +96,7 @@ for fold, (train_indices, val_indices) in enumerate(kfold.split(cv_dataset['cv_t
     elif architecture == 'deeplabv3plus':
         model = DeepLabV3Plus(encoder_name='resnet101', encoder_weights='imagenet', in_channels=3, classes=1)
     elif architecture == 'unet':
-        model = Unet(encoder_name='resnet50', encoder_weights='imagenet', in_channels=3, classes=1)
+        model = Unet(encoder_name='resnet101', encoder_weights='imagenet', in_channels=3, classes=1)
     ###
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
