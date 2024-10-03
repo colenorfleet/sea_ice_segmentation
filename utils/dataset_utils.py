@@ -40,6 +40,9 @@ class SegmentationDataset(TorchDataset):
         label = torch.LongTensor(transformed["mask"])
         mask = torch.LongTensor(transformed["lidar_mask"])
 
+        assert torch.all((label==0) | (label==1)), "label is not binary"
+        assert torch.all((mask==0) | (mask==1)), "mask is not binary"
+
         image = image.permute(2, 0, 1)
 
         return image, label, mask, original_image, original_segmentation_map, filename

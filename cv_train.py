@@ -15,25 +15,19 @@ from sklearn.model_selection import KFold
 
 
 # "segformer" or "deeplabv3plus" or "unet"
-#architecture = sys.argv[1]
-#dataset_name = sys.argv[2]
-#num_epochs = int(sys.argv[3])
-#batch_size = int(sys.argv[4])
-#learning_rate = 1e-4
-
-
-architecture = "test1"
-dataset_name = "raw"
-num_epochs = 5
-batch_size = 4
+architecture = sys.argv[1]
+dataset_name = sys.argv[2]
+num_epochs = int(sys.argv[3])
+batch_size = int(sys.argv[4])
+learning_rate = 1e-3
 num_folds = 5
-learning_rate = 1e-4
 
-print("Cross-Validation Training with 5 folds")
+print(f"Cross-Validation Training with {num_folds} folds")
 print(f"Architecture: {architecture}")
 print(f"Dataset: {dataset_name}")
 print(f"Number of epochs: {num_epochs}")
 print(f"Batch size: {batch_size}")
+
 
 ### create dataset
 
@@ -53,7 +47,9 @@ img_size = 512
 train_transform = A.Compose([
         A.Resize(width=img_size, height=img_size),
         A.HorizontalFlip(p=0.5),
+        A.VerticalFlip(p=0.2),
         A.RandomBrightnessContrast(p=0.2),
+        A.RandomResizedCrop(width=img_size, height=img_size, scale=(0.5,0.75), p=0.2),
         A.Normalize(mean=ADE_MEAN, std=ADE_STD),
         ], additional_targets={"lidar_mask": "mask"})
 
@@ -75,8 +71,8 @@ os.makedirs(output_dir, exist_ok=True)
 for fold, (train_indices, val_indices) in enumerate(kfold.split(cv_dataset['cv_train'])):
     print(f"Fold {fold}")
 
-    train_subset = Subset(cv_dataset['cv_train'], train_indices)
-    val_subset = Subset(cv_dataset['cv_train'], val_indices)
+    train_subset = Subset(cv_dataset['cv_train'], [int(idx) for idx in train_indices])
+    val_subset = Subset(cv_dataset['cv_train'], [int(idx) for idx in val_indices])
 
     train_subset_cv = SegmentationDataset(train_subset, train_transform)
     val_subset_cv = SegmentationDataset(val_subset, val_transform)
@@ -102,8 +98,10 @@ for fold, (train_indices, val_indices) in enumerate(kfold.split(cv_dataset['cv_t
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     criterion = torch.nn.BCEWithLogitsLoss(reduction='none')
-
     optimizer = AdamW(model.parameters(), lr=learning_rate)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer, mode="min", factor=0.1, patience=3, verbose=True
+    )
 
     ### training loop ###
     best_val_loss = float("inf")
@@ -227,7 +225,7 @@ for fold, (train_indices, val_indices) in enumerate(kfold.split(cv_dataset['cv_t
             avg_val_iou = running_val_iou / len(validation_dataloader)
             avg_val_f1 = running_val_f1 / len(validation_dataloader)
 
-            # scheduler.step(avg_val_loss)
+            scheduler.step(avg_val_loss)
 
             print(
                 f"\nFold {fold}\n"

@@ -96,7 +96,9 @@ with open(csv_file, "w+", newline="") as f:
         train_transform = A.Compose([
                 A.Resize(width=img_size, height=img_size),
                 A.HorizontalFlip(p=0.5),
+                A.VerticalFlip(p=0.2),
                 A.RandomBrightnessContrast(p=0.2),
+                A.RandomResizedCrop(width=img_size, height=img_size, scale=(0.5,0.75), p=0.2),
                 A.Normalize(mean=ADE_MEAN, std=ADE_STD),
                 ], additional_targets={"lidar_mask": "mask"})
 

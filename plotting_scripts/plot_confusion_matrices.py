@@ -23,18 +23,18 @@ def plot_condusion_matrices():
 
         # order: TP, FP, TN, FN
         averages = {
-            'raw': (int(raw_stats['Number True Positive'].mean()), 
-                    int(raw_stats['Number False Positive'].mean()), 
-                    int(raw_stats['Number True Negative'].mean()),
-                    int(raw_stats['Number False Negative'].mean())),
-            'morph': (int(morph_stats['Number True Positive'].mean()),
-                      int(morph_stats['Number False Positive'].mean()),
-                      int(morph_stats['Number True Negative'].mean()),
-                      int(morph_stats['Number False Negative'].mean())),
-            'otsu': (int(otsu_stats['Number True Positive'].mean()),
-                     int(otsu_stats['Number False Positive'].mean()),
-                     int(otsu_stats['Number True Negative'].mean()),
-                     int(otsu_stats['Number False Negative'].mean())),
+            'raw': (raw_stats['Number True Positive'].mean(), 
+                    raw_stats['Number False Positive'].mean(), 
+                    raw_stats['Number True Negative'].mean(),
+                    raw_stats['Number False Negative'].mean()),
+            'morph': (morph_stats['Number True Positive'].mean(),
+                      morph_stats['Number False Positive'].mean(),
+                      morph_stats['Number True Negative'].mean(),
+                      morph_stats['Number False Negative'].mean()),
+            'otsu': (otsu_stats['Number True Positive'].mean(),
+                     otsu_stats['Number False Positive'].mean(),
+                     otsu_stats['Number True Negative'].mean(),
+                     otsu_stats['Number False Negative'].mean()),
         }
            
         x = np.arange(len(categories))
@@ -42,9 +42,12 @@ def plot_condusion_matrices():
         
         fig, ax = plt.subplots(layout='constrained', figsize=(20, 10))
         multiplier = 0
+        max_value = 0
 
         for attribute, measurement in averages.items():
             offset = width * multiplier
+            if max(measurement) > max_value:
+                max_value = max(measurement)
             rects = ax.bar(x + offset, measurement, width, label=attribute)
             ax.bar_label(rects, padding=3)
             multiplier += 1
@@ -54,10 +57,10 @@ def plot_condusion_matrices():
         ax.set_title(f'Average Confusion Matrix Values for {model}')
         ax.set_xticks(x + width, ['True Positive', 'False Positive', 'True Negative', 'False Negative'])
         ax.legend(loc='upper left', ncols=4)
-        ax.set_ylim(0, 260000)
+        ax.set_ylim(0, 185000)
 
 
-        plt.savefig(f'/home/cole/Documents/NTNU/sea_ice_segmentation/metric_plots/evaluating/confusion_matrices/{model}_confusion_matrix.png')
+        plt.savefig(f'/home/cole/Pictures/thesis_report/test_set_statistics/confusion_matrices/{model}_confusion_matrix.png')
         plt.close()
 
 if __name__ == '__main__':

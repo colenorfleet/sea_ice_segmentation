@@ -5,14 +5,16 @@ import csv
 import pandas as pd
 import matplotlib.pyplot as plt
 
-input_dict = {'train': 'Avg BCE Train Loss',
-              'val': 'Avg BCE Val Loss'}
+input_dict = {'loss': ['Avg BCE Train Loss', 'Avg BCE Val Loss'],
+              'iou': ['Avg Train IOU', 'Avg Val IOU'],
+                'f1': ['Avg Train F1', 'Avg Val F1'],
+}
 
-def view_training_statistics(model_name, dataset_name, metric='train'):
+def view_training_statistics(model_name, dataset_name, metric='loss', save=False):
 
     # view stats for each model on a specific dataset
 
-    if model_name != 'all' and dataset_name == 'all' and metric == 'both':
+    if model_name != 'all' and dataset_name == 'all':
 
         # get the training statistics for the model
 
@@ -20,31 +22,38 @@ def view_training_statistics(model_name, dataset_name, metric='train'):
         morph_train_stats = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/output/{model_name}/morph/training_logs.csv')
         otsu_train_stats = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/output/{model_name}/otsu/training_logs.csv')
 
+        number_epochs = len(raw_train_stats['Avg BCE Train Loss'])-1
+
         plt.figure(figsize=(20, 10))
 
-        plt.title(f"Losses for model: {model_name} on all datasets")
+        plt.title(f"{metric} training statistics for {model_name} on ALL datasets")
 
-        plt.plot(raw_train_stats['Avg BCE Train Loss'], label=f'raw dataset train loss', color='red')
-        plt.plot(morph_train_stats['Avg BCE Train Loss'], label=f'morph train loss', color='blue')
-        plt.plot(otsu_train_stats['Avg BCE Train Loss'], label=f'otsu train loss', color='green')
+        plt.plot(raw_train_stats[input_dict[metric][0]], label=f'raw dataset training {metric}', color='red')
+        plt.plot(morph_train_stats[input_dict[metric][0]], label=f'morph dataset training {metric}', color='blue')
+        plt.plot(otsu_train_stats[input_dict[metric][0]], label=f'otsu dataset training {metric}', color='green')
 
-        plt.plot(raw_train_stats['Avg BCE Val Loss'], label=f'raw dataset val loss', color = 'red', linestyle='--')
-        plt.plot(morph_train_stats['Avg BCE Val Loss'], label=f'morph val loss', color='blue', linestyle='--')
-        plt.plot(otsu_train_stats['Avg BCE Val Loss'], label=f'otsu val loss', color='green', linestyle='--')
+        plt.plot(raw_train_stats[input_dict[metric][1]], label=f'raw dataset validation {metric}', color = 'red', linestyle='--')
+        plt.plot(morph_train_stats[input_dict[metric][1]], label=f'morph dataset validation {metric}', color='blue', linestyle='--')
+        plt.plot(otsu_train_stats[input_dict[metric][1]], label=f'otsu dataset validation {metric}', color='green', linestyle='--')
 
         plt.xlabel('Epoch')
-        plt.ylabel('BCE Loss')
+        plt.ylabel(f"{metric}")
+
+        plt.xlim(0, number_epochs)
+        plt.ylim(0, 1.25)
 
         plt.legend()
         plt.grid()
 
-        # plt.savefig(f'/home/cole/Documents/NTNU/sea_ice_segmentation/metric_plots/training/{model_name}_losses.png')
-
-        plt.show()
+        if save:
+            plt.savefig(f'/home/cole/Pictures/thesis_report/training_statistics/10_epoch_data_aug_Oct_3/{model_name}_training_{metric}.png')
+            plt.close()
+        else:
+            plt.show()
 
         pass
 
-    elif model_name == 'all' and dataset_name != 'all' and metric == 'both':
+    elif model_name == 'all' and dataset_name != 'all':
 
         # get the training statistics for each model
 
@@ -52,31 +61,36 @@ def view_training_statistics(model_name, dataset_name, metric='train'):
         deeplabv3plus_train_stats = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/output/deeplabv3plus/{dataset_name}/training_logs.csv')
         segformer_train_stats = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/output/segformer/{dataset_name}/training_logs.csv')
 
+        number_epochs = len(unet_train_stats['Avg BCE Train Loss'])-1
         # For now let's just plot loss
 
         plt.figure(figsize=(20, 10))
 
+        plt.title(f"{metric} training statistics for all models on dataset: {dataset_name}")
 
-        plt.title(f"Losses for all models on dataset: {dataset_name}")
+        plt.plot(unet_train_stats[input_dict[metric][0]], label=f'unet training {metric}', color='red')
+        plt.plot(unet_train_stats[input_dict[metric][1]], label=f'unet validation {metric}', color='red', linestyle='--')
 
-        plt.plot(unet_train_stats[input_dict['train']], label=f'unet train loss', color='red')
-        plt.plot(unet_train_stats[input_dict['val']], label=f'unet val loss', color='red', linestyle='--')
+        plt.plot(deeplabv3plus_train_stats[input_dict[metric][0]], label=f'deeplabv3plus training {metric}', color='blue')
+        plt.plot(deeplabv3plus_train_stats[input_dict[metric][1]], label=f'deeplabv3plus validation {metric}', color='blue', linestyle='--')
 
-        plt.plot(deeplabv3plus_train_stats[input_dict['train']], label=f'deeplabv3plus train loss', color='blue')
-        plt.plot(deeplabv3plus_train_stats[input_dict['val']], label=f'deeplabv3plus val loss', color='blue', linestyle='--')
-
-        plt.plot(segformer_train_stats[input_dict['train']], label=f'segformer train loss', color='green')
-        plt.plot(segformer_train_stats[input_dict['val']], label=f'segformer val loss', color='green', linestyle='--')
+        plt.plot(segformer_train_stats[input_dict[metric][0]], label=f'segformer training {metric}', color='green')
+        plt.plot(segformer_train_stats[input_dict[metric][1]], label=f'segformer validation {metric}', color='green', linestyle='--')
 
         plt.xlabel('Epoch')
-        plt.ylabel('BCE Loss')
+        plt.ylabel(f'{metric}')
+
+        plt.xlim(0, number_epochs)
+        plt.ylim(0, 1.25)
 
         plt.legend()
         plt.grid()
 
-        # plt.savefig(f'/home/cole/Documents/NTNU/sea_ice_segmentation/metric_plots/training/{dataset_name}_losses.png')
-
-        plt.show()
+        if save:
+            plt.savefig(f'/home/cole/Pictures/thesis_report/training_statistics/10_epoch_data_aug_Oct_3/{dataset_name}_training_{metric}.png')
+            plt.close()
+        else:
+            plt.show()
 
         pass
 
@@ -91,11 +105,11 @@ def view_training_statistics(model_name, dataset_name, metric='train'):
 
         plt.title(f"Training statistics for model: {model_name} on dataset: {dataset_name}")
 
-        plt.plot(train_stats['Avg BCE Train Loss'], label=f'{model_name} train loss')
-        plt.plot(train_stats['Avg BCE Val Loss'], label=f'{model_name} val loss')
+        plt.plot(train_stats[input_dict[metric][0]], label=f'{model_name} training {metric}')
+        plt.plot(train_stats[input_dict[metric[1]]], label=f'{model_name} validation {metric}')
 
         plt.xlabel('Epoch')
-        plt.ylabel('BCE Loss')
+        plt.ylabel(f"{metric}")
 
         plt.legend()
         plt.grid()
@@ -115,5 +129,6 @@ if __name__ == "__main__":
     model_name = sys.argv[1]
     dataset_name = sys.argv[2]
     metric = sys.argv[3]
+    save_flag = sys.argv[4]
 
-    view_training_statistics(model_name, dataset_name, metric)
+    view_training_statistics(model_name, dataset_name, metric, save_flag)
