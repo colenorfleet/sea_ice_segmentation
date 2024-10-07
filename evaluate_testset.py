@@ -19,9 +19,11 @@ from segmentation_models_pytorch import PSPNet, DeepLabV3Plus, Unet, DeepLabV3
 
 architecture = sys.argv[1]
 dataset_name = sys.argv[2]
+all_dataset_flag = sys.argv[3]
 
 print(f"Architecture: {architecture}")
 print(f"Dataset: {dataset_name}")
+print(f"all_dataset_flag: {all_dataset_flag}")
 
 ### create dataset
 
@@ -49,20 +51,6 @@ val_transform = A.Compose([
 test_dataset = SegmentationDataset(dataset["test"], transform=val_transform)
 test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False, collate_fn=collate_fn)
 
-data_directory = os.path.join('./output', architecture, dataset_name)
-
-'''
-if architecture == 'dinov2':
-    ### DINOV2
-    dinov2_encoder = Dinov2Model.from_pretrained("facebook/dinov2-base")
-    deeplabv3plus_decoder = DeepLabV3Plus(encoder_name='resnet50', encoder_weights='imagenet', in_channels=3, classes=1)
-
-    for param in dinov2_encoder.parameters():
-        param.requires_grad = False
-    
-    model = DinoBinarySeg(encoder=dinov2_encoder, decoder=deeplabv3plus_decoder)
-'''
-
 if architecture == 'segformer':
     model = SegformerForSemanticSegmentation.from_pretrained("nvidia/segformer-b0-finetuned-ade-512-512",
     num_labels=1,
@@ -78,6 +66,11 @@ elif architecture == 'unet':
     model = Unet(encoder_name='resnet101', encoder_weights='imagenet', in_channels=3, classes=1)
 
 
+if all_dataset_flag:
+    data_directory = os.path.join('./all_dataset_output', architecture)
+else:
+    data_directory = os.path.join('./output', architecture, dataset_name)
+
 model.load_state_dict(torch.load(os.path.join(data_directory, "best_ice_seg_model.pth")))
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -85,7 +78,12 @@ model.to(device)
 
 criterion = torch.nn.BCEWithLogitsLoss(reduction='none')
 
-test_data_output_dir = os.path.join("./test_data_output", architecture, dataset_name)
+# Make output directories
+if all_dataset_flag:
+    test_data_output_dir = os.path.join("./test_data_output/all_dataset_train", architecture, dataset_name)
+else:
+    test_data_output_dir = os.path.join("./test_data_output", architecture, dataset_name)
+
 os.makedirs(test_data_output_dir, exist_ok=True)
 
 # Logging
@@ -109,8 +107,6 @@ csv_header = [
 ]
 
 model.eval()
-
-
 
 with open(csv_file, "w", newline="") as f:
     csv_writer = csv.writer(f)

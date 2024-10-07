@@ -33,9 +33,9 @@ print(f"Batch size: {batch_size}")
 
 dataset_path = "/home/cole/Documents/NTNU/datasets"
 
-image_dir = os.path.join(dataset_path, dataset_name, "images/")
+image_dir = os.path.join(dataset_path, "images/")
 label_dir = os.path.join(dataset_path, dataset_name, "ice_masks/")
-mask_dir = os.path.join(dataset_path, dataset_name, "lidar_masks/")
+mask_dir = os.path.join(dataset_path, "lidar_masks/")
 filename_split_dir = dataset_path
 
 dataset = craft_datasetdict(image_dir, label_dir, mask_dir, filename_split_dir)

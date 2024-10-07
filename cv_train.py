@@ -3,7 +3,7 @@ import sys
 import csv
 import torch
 import albumentations as A
-from utils.dataset_utils import craft_datasetdict, collate_fn, SegmentationDataset
+from utils.dataset_utils import craft_cv_datasetdict, collate_fn, SegmentationDataset
 from utils.lossfn_utils import quick_metrics
 from torch.utils.data import DataLoader, Subset
 from tqdm.auto import tqdm
@@ -33,12 +33,12 @@ print(f"Batch size: {batch_size}")
 
 dataset_path = "/home/cole/Documents/NTNU/datasets"
 
-image_dir = os.path.join(dataset_path, dataset_name, "images/")
+image_dir = os.path.join(dataset_path, "images/")
 label_dir = os.path.join(dataset_path, dataset_name, "ice_masks/")
-mask_dir = os.path.join(dataset_path, dataset_name, "lidar_masks/")
+mask_dir = os.path.join(dataset_path, "lidar_masks/")
 filename_split_dir = dataset_path
 
-cv_dataset = craft_datasetdict(image_dir, label_dir, mask_dir, filename_split_dir, cv_flag=True)
+cv_dataset = craft_cv_datasetdict(image_dir, label_dir, mask_dir, filename_split_dir)
 
 ADE_MEAN = [0.4685, 0.4731, 0.4766]
 ADE_STD = [0.2034, 0.1987, 0.1968]
@@ -77,8 +77,8 @@ for fold, (train_indices, val_indices) in enumerate(kfold.split(cv_dataset['cv_t
     train_subset_cv = SegmentationDataset(train_subset, train_transform)
     val_subset_cv = SegmentationDataset(val_subset, val_transform)
 
-    train_dataloader = DataLoader(train_subset_cv, batch_size=batch_size, shuffle=True, collate_fn=collate_fn)
-    val_dataloader = DataLoader(val_subset_cv, batch_size=batch_size, shuffle=False, collate_fn=collate_fn)
+    train_dataloader = DataLoader(train_subset_cv, batch_size=batch_size, shuffle=True, collate_fn=collate_fn, drop_last=True)
+    val_dataloader = DataLoader(val_subset_cv, batch_size=batch_size, shuffle=False, collate_fn=collate_fn, drop_last=True)
 
     # initialize model here, new one everytime
     ### define model
@@ -239,5 +239,20 @@ for fold, (train_indices, val_indices) in enumerate(kfold.split(cv_dataset['cv_t
                 print(f"Loss improved from {best_val_loss:.4f} to {avg_val_loss:.4f}... saving model")
                 torch.save(model.state_dict(), os.path.join(output_dir, f"best_ice_seg_model_fold_{fold}.pth"))
                 best_val_loss = avg_val_loss
+
+
+            # Append the training and validation logs to the CSV file
+            csv_writer.writerow(
+                    [
+                        epoch + 1,
+                        avg_train_loss,
+                        avg_val_loss,
+                        learning_rate,
+                        avg_train_iou,
+                        avg_val_iou,
+                        avg_train_f1,
+                        avg_val_f1
+                    ]
+                )
 
 

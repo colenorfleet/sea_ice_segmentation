@@ -58,51 +58,43 @@ def collate_fn(inputs):
 
     return batch
 
-def craft_datasetdict(img_path_dir, label_path_dir, mask_path_dir, split_path, cv_flag=False):
-    
-    image_paths_train, image_paths_val, image_paths_test = [],[],[]
-    label_paths_train, label_paths_val, label_paths_test = [],[],[]
-    mask_paths_train, mask_paths_val, mask_paths_test = [],[],[]
-    filenames_train, filenames_val, filenames_test = [],[],[]
+def read_split_files(img_path_dir, label_path_dir, mask_path_dir, split_path, split_names):
+    image_paths, label_paths, mask_paths, filenames = {}, {}, {}, {}
+    for split in split_names:
+        image_paths[split], label_paths[split], mask_paths[split], filenames[split] = [],[],[],[]
+        with open(os.path.join(split_path, f"{split}.txt"), "r") as f:
+            for line in f:
+                filename = line.strip()
+                image_paths[split].append(os.path.join(img_path_dir, f"{filename}.jpg"))
+                label_paths[split].append(os.path.join(label_path_dir, f"{filename}.png"))
+                mask_paths[split].append(os.path.join(mask_path_dir, f"{filename}.png"))
+                filenames[split].append(filename)
 
-    with open(os.path.join(split_path, "train.txt"), "r") as f:
-        for line in f:
-            image_paths_train.append(img_path_dir + line.strip() + ".jpg")
-            label_paths_train.append(label_path_dir + line.strip() + ".png")
-            mask_paths_train.append(mask_path_dir + line.strip() + ".png")
-            filenames_train.append(line.strip())
-    with open(os.path.join(split_path, "val.txt"), "r") as f:
-        for line in f:
-            image_paths_val.append(img_path_dir + line.strip() + ".jpg")
-            label_paths_val.append(label_path_dir + line.strip() + ".png")
-            mask_paths_val.append(mask_path_dir + line.strip() + ".png")
-            filenames_val.append(line.strip())
-    with open(os.path.join(split_path, "test.txt"), "r") as f:
-        for line in f:
-            image_paths_test.append(img_path_dir + line.strip() + ".jpg")
-            label_paths_test.append(label_path_dir + line.strip() + ".png")
-            mask_paths_test.append(mask_path_dir + line.strip() + ".png")
-            filenames_test.append(line.strip())
+def craft_datasetdict(img_path_dir, label_path_dir, mask_path_dir, split_path):
+    split_names = ["train", "val", "test"]
+    image_paths, label_paths, mask_paths, filenames = read_split_files(img_path_dir, label_path_dir, mask_path_dir, split_path, split_names)
 
-    if cv_flag:
-        filenames_cv = filenames_train + filenames_val
-        image_paths_cv = image_paths_train + image_paths_val
-        label_paths_cv = label_paths_train + label_paths_val
-        mask_paths_cv = mask_paths_train + mask_paths_val
-        cv_train_dataset = create_dataset(image_paths_cv, label_paths_cv, mask_paths_cv, filenames_cv)
+    datasets = {}
+    for split in split_names:
+        datasets[split] = create_dataset(image_paths[split], label_paths[split], mask_paths[split], filenames[split])
 
-        dataset = DatasetDict({"cv_train": cv_train_dataset, "val": None, "test": None})
-
-        return dataset
-
-
-    train_dataset = create_dataset(image_paths_train, label_paths_train, mask_paths_train, filenames_train)
-    val_dataset = create_dataset(image_paths_val, label_paths_val, mask_paths_val, filenames_val)
-    test_dataset = create_dataset(image_paths_test, label_paths_test, mask_paths_test, filenames_test)
-
-    dataset = DatasetDict({"train": train_dataset, "val": val_dataset, "test": test_dataset})
+    dataset = DatasetDict(datasets)
 
     return dataset
+
+def craft_cv_datasetdict(img_path_dir, label_path_dir, mask_path_dir, split_path):
+    split_names = ["train", "val"]
+    image_paths, label_paths, mask_paths, filenames = read_split_files(img_path_dir, label_path_dir, mask_path_dir, split_path, split_names)
+
+    # combine train and val for cross-validation
+    cv_image_paths = image_paths["train"] + image_paths["val"]
+    cv_label_paths = label_paths["train"] + label_paths["val"]
+    cv_mask_paths = mask_paths["train"] + mask_paths["val"]
+    cv_filenames = filenames["train"] + filenames["val"]
+
+    cv_train_dataset = create_dataset(cv_image_paths, cv_label_paths, cv_mask_paths, cv_filenames)
+
+    return DatasetDict({"cv_train": cv_train_dataset, "val": None, "test": None})
 
 
 

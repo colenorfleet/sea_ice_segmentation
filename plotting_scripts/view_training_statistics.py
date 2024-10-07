@@ -10,6 +10,9 @@ input_dict = {'loss': ['Avg BCE Train Loss', 'Avg BCE Val Loss'],
                 'f1': ['Avg Train F1', 'Avg Val F1'],
 }
 
+model_names = ['unet', 'deeplabv3plus', 'segformer']
+dataset_names = ['raw', 'morph', 'otsu']
+
 def view_training_statistics(model_name, dataset_name, metric='loss', save=False):
 
     # view stats for each model on a specific dataset
@@ -45,7 +48,7 @@ def view_training_statistics(model_name, dataset_name, metric='loss', save=False
         plt.legend()
         plt.grid()
 
-        if save:
+        if save == 'True':
             plt.savefig(f'/home/cole/Pictures/thesis_report/training_statistics/10_epoch_data_aug_Oct_3/{model_name}_training_{metric}.png')
             plt.close()
         else:
@@ -53,7 +56,7 @@ def view_training_statistics(model_name, dataset_name, metric='loss', save=False
 
         pass
 
-    elif model_name == 'all' and dataset_name != 'all':
+    elif model_name == 'all' and dataset_name in dataset_names:
 
         # get the training statistics for each model
 
@@ -86,7 +89,7 @@ def view_training_statistics(model_name, dataset_name, metric='loss', save=False
         plt.legend()
         plt.grid()
 
-        if save:
+        if save == 'True':
             plt.savefig(f'/home/cole/Pictures/thesis_report/training_statistics/10_epoch_data_aug_Oct_3/{dataset_name}_training_{metric}.png')
             plt.close()
         else:
@@ -97,7 +100,7 @@ def view_training_statistics(model_name, dataset_name, metric='loss', save=False
 
     # view stats for a specific model on a specific dataset
 
-    elif model_name != 'all' and dataset_name != 'all':
+    elif model_name != 'all' and dataset_name in dataset_names:
 
         # get the training statistics for the model
 
@@ -117,6 +120,54 @@ def view_training_statistics(model_name, dataset_name, metric='loss', save=False
         plt.show()
 
         pass
+
+    elif model_name == 'all' and dataset_name == 'trained_on_all':
+
+        # get the training statistics for each model
+
+        unet_train_stats = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/all_dataset_output/unet/training_logs.csv')
+        deeplabv3plus_train_stats = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/all_dataset_output/deeplabv3plus/training_logs.csv')
+        segformer_train_stats = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/all_dataset_output/segformer/training_logs.csv')
+
+        number_epochs = len(unet_train_stats['Epoch'])
+        # For now let's just plot loss
+
+        plt.figure(figsize=(20, 10))
+
+        plt.title(f"{metric} training statistics for all models trained all datasets in sequence")
+
+        plt.vlines([4, 9], 0, 1.25, color='black', linestyle='--')
+        
+
+        plt.plot(unet_train_stats[input_dict[metric][0]], label=f'unet training {metric}', color='red')
+        plt.plot(unet_train_stats[input_dict[metric][1]], label=f'unet validation {metric}', color='red', linestyle='--')
+
+        plt.plot(deeplabv3plus_train_stats[input_dict[metric][0]], label=f'deeplabv3plus training {metric}', color='blue')
+        plt.plot(deeplabv3plus_train_stats[input_dict[metric][1]], label=f'deeplabv3plus validation {metric}', color='blue', linestyle='--')
+
+        plt.plot(segformer_train_stats[input_dict[metric][0]], label=f'segformer training {metric}', color='green')
+        plt.plot(segformer_train_stats[input_dict[metric][1]], label=f'segformer validation {metric}', color='green', linestyle='--')
+
+        plt.text(1.5, -0.1, 'Raw Dataset', fontsize=12)
+        plt.text(5.5, -0.1, 'Morph Dataset', fontsize=12)
+        plt.text(10.5, -0.1, 'Otsu Dataset', fontsize=12)
+
+        plt.xlabel('Epoch')
+        plt.ylabel(f'{metric}')
+
+        plt.xlim(0, number_epochs)
+        plt.ylim(0, 1.25)
+
+        plt.legend()
+        plt.grid()
+        
+        if save == 'True':
+            plt.savefig(f'/home/cole/Pictures/thesis_report/training_statistics/all_dataset_training_{metric}.png')
+            plt.close()
+        else:
+            plt.show()
+
+        
 
 
     else:

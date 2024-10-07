@@ -32,20 +32,18 @@ if os.path.exists(os.path.join(output_path, 'otsu')):
     print('otsu directory already exists, deleting')
     shutil.rmtree(os.path.join(output_path, 'otsu'))
 
+os.makedirs(os.path.join(output_path, 'lidar_masks'))
+os.makedirs(os.path.join(output_path, 'images'))
+
 os.makedirs(os.path.join(output_path, 'raw'))
-os.makedirs(os.path.join(output_path, 'raw', 'images'))
 os.makedirs(os.path.join(output_path, 'raw', 'ice_masks'))
-os.makedirs(os.path.join(output_path, 'raw', 'lidar_masks'))
 
 os.makedirs(os.path.join(output_path, 'morph'))
-os.makedirs(os.path.join(output_path, 'morph', 'images'))
 os.makedirs(os.path.join(output_path, 'morph', 'ice_masks'))
-os.makedirs(os.path.join(output_path, 'morph', 'lidar_masks'))
 
 os.makedirs(os.path.join(output_path, 'otsu'))
-os.makedirs(os.path.join(output_path, 'otsu', 'images'))
 os.makedirs(os.path.join(output_path, 'otsu', 'ice_masks'))
-os.makedirs(os.path.join(output_path, 'otsu', 'lidar_masks'))
+
 
 
 
@@ -84,20 +82,15 @@ for i in tqdm(range(len(topo_files))):
     closed_binary_topo_mask = cv2.resize(closed_binary_topo_mask, (img_size, img_size))
     final_binary_ice_mask = cv2.resize(final_binary_ice_mask, (img_size, img_size))
     
-
     # Save images
+    cv2.imwrite(os.path.join(output_path, 'images', filename + '.jpg'), real)
+    cv2.imwrite(os.path.join(output_path, 'lidar_masks', filename + '.png'), mask*255)
 
     # raw
-    cv2.imwrite(os.path.join(output_path, 'raw', 'images', filename + '.jpg'), real)
-    cv2.imwrite(os.path.join(output_path, 'raw', 'lidar_masks', filename + '.png'), mask*255)
     cv2.imwrite(os.path.join(output_path, 'raw', 'ice_masks', filename + '.png'), binary_topo_mask*255)
 
     # morph
-    cv2.imwrite(os.path.join(output_path, 'morph', 'images', filename + '.jpg'), real)
-    cv2.imwrite(os.path.join(output_path, 'morph', 'lidar_masks', filename + '.png'), mask*255)
     cv2.imwrite(os.path.join(output_path, 'morph', 'ice_masks', filename + '.png'), closed_binary_topo_mask*255)
 
     # otsu
-    cv2.imwrite(os.path.join(output_path, 'otsu', 'images', filename + '.jpg'), real)
-    cv2.imwrite(os.path.join(output_path, 'otsu', 'lidar_masks', filename + '.png'), mask*255)
     cv2.imwrite(os.path.join(output_path, 'otsu', 'ice_masks', filename + '.png'), final_binary_ice_mask*255)
