@@ -13,7 +13,6 @@ from segmentation_models_pytorch import DeepLabV3Plus, Unet
 from sklearn.model_selection import KFold
 
 
-
 # "segformer" or "deeplabv3plus" or "unet"
 architecture = sys.argv[1]
 dataset_name = sys.argv[2]
@@ -116,8 +115,8 @@ for fold, (train_indices, val_indices) in enumerate(kfold.split(cv_dataset['cv_t
             "Learning Rate",
             "Avg Train IOU",
             "Avg Val IOU",
-            "Avg Train F1",
-            "Avg Val F1"
+            "Avg Train DICE",
+            "Avg Val DICE"
         ]
     
     with open(csv_file, "w+", newline="") as f:
@@ -128,7 +127,7 @@ for fold, (train_indices, val_indices) in enumerate(kfold.split(cv_dataset['cv_t
             print(f"Epoch {epoch + 1}")
             running_train_loss = 0.0
             running_train_iou = 0.0
-            running_train_f1 = 0.0
+            running_train_dice = 0.0
 
             train_dataloader = tqdm(train_dataloader, desc=f"Fold {fold} Epoch {epoch + 1}/ {num_epochs}", unit="batch")
 
@@ -150,32 +149,34 @@ for fold, (train_indices, val_indices) in enumerate(kfold.split(cv_dataset['cv_t
                     logits = model(image)
 
                 logits = logits.squeeze(1)
+
+                # Zero the gradients before the backward pass
+                optimizer.zero_grad()
+
                 loss = criterion(logits, label.float())
                 loss = loss * mask
 
                 mean_loss = loss.sum() / mask.sum()
-                    
+                
                 mean_loss.backward()
                 optimizer.step()
 
-                optimizer.zero_grad()
-
-                iou, f1 = quick_metrics(logits, label, mask)
+                iou, dice = quick_metrics(logits, label, mask)
 
                 running_train_loss += mean_loss.item()
                 running_train_iou += iou
-                running_train_f1 += f1
+                running_train_dice += dice
 
                 # update progress bar
                 train_dataloader.set_postfix(
                     loss=mean_loss.item(),
                     iou=iou,
-                    f1=f1
+                    dice=dice
                 )
 
             avg_train_loss = running_train_loss / len(train_dataloader)
             avg_train_iou = running_train_iou / len(train_dataloader)
-            avg_train_f1 = running_train_f1 / len(train_dataloader)
+            avg_train_dice = running_train_dice / len(train_dataloader)
 
 
 
@@ -183,7 +184,7 @@ for fold, (train_indices, val_indices) in enumerate(kfold.split(cv_dataset['cv_t
             model.eval()
             running_val_loss = 0.0
             running_val_iou = 0.0
-            running_val_f1 = 0.0
+            running_val_dice = 0.0
 
             validation_dataloader = tqdm(val_dataloader, desc="Validation", unit="batch")
 
@@ -208,22 +209,22 @@ for fold, (train_indices, val_indices) in enumerate(kfold.split(cv_dataset['cv_t
                     v_loss = v_loss * mask
 
                     mean_v_loss = v_loss.sum() / mask.sum()
-                    val_iou, val_f1 = quick_metrics(logits, label, mask)
+                    val_iou, val_dice = quick_metrics(logits, label, mask)
 
                     running_val_loss += mean_v_loss.item()
                     running_val_iou += val_iou
-                    running_val_f1 += val_f1
+                    running_val_dice += val_dice
 
                     # update progress bar
                     validation_dataloader.set_postfix(
                         val_loss=mean_v_loss.item(),
                         val_iou=val_iou,
-                        val_f1=val_f1
+                        val_dice=val_dice
                     )
 
             avg_val_loss = running_val_loss / len(validation_dataloader)
             avg_val_iou = running_val_iou / len(validation_dataloader)
-            avg_val_f1 = running_val_f1 / len(validation_dataloader)
+            avg_val_dice = running_val_dice / len(validation_dataloader)
 
             scheduler.step(avg_val_loss)
 
@@ -250,8 +251,8 @@ for fold, (train_indices, val_indices) in enumerate(kfold.split(cv_dataset['cv_t
                         learning_rate,
                         avg_train_iou,
                         avg_val_iou,
-                        avg_train_f1,
-                        avg_val_f1
+                        avg_train_dice,
+                        avg_val_dice
                     ]
                 )
 

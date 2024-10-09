@@ -5,13 +5,15 @@ import csv
 import pandas as pd
 import matplotlib.pyplot as plt
 
-input_dict = {'loss': ['Avg BCE Train Loss', 'Avg BCE Val Loss'],
-              'iou': ['Avg Train IOU', 'Avg Val IOU'],
-                'f1': ['Avg Train F1', 'Avg Val F1'],
+input_dict = {'Loss': ['Avg BCE Train Loss', 'Avg BCE Val Loss'],
+              'IOU': ['Avg Train IOU', 'Avg Val IOU'],
+                'DICE': ['Avg Train DICE', 'Avg Val DICE'],
 }
 
 model_names = ['unet', 'deeplabv3plus', 'segformer']
 dataset_names = ['raw', 'morph', 'otsu']
+
+output_dir = '15_epoch_oct_7'
 
 def view_training_statistics(model_name, dataset_name, metric='loss', save=False):
 
@@ -29,7 +31,7 @@ def view_training_statistics(model_name, dataset_name, metric='loss', save=False
 
         plt.figure(figsize=(20, 10))
 
-        plt.title(f"{metric} training statistics for {model_name} on ALL datasets")
+        plt.title(f"{metric} training statistics for {model_name} on ALL datasets", size=20)
 
         plt.plot(raw_train_stats[input_dict[metric][0]], label=f'raw dataset training {metric}', color='red')
         plt.plot(morph_train_stats[input_dict[metric][0]], label=f'morph dataset training {metric}', color='blue')
@@ -39,17 +41,17 @@ def view_training_statistics(model_name, dataset_name, metric='loss', save=False
         plt.plot(morph_train_stats[input_dict[metric][1]], label=f'morph dataset validation {metric}', color='blue', linestyle='--')
         plt.plot(otsu_train_stats[input_dict[metric][1]], label=f'otsu dataset validation {metric}', color='green', linestyle='--')
 
-        plt.xlabel('Epoch')
-        plt.ylabel(f"{metric}")
+        plt.xlabel('Epoch', size=20)
+        plt.ylabel(f"{metric}", size=20)
 
         plt.xlim(0, number_epochs)
         plt.ylim(0, 1.25)
 
-        plt.legend()
+        plt.legend(fontsize=20)
         plt.grid()
 
         if save == 'True':
-            plt.savefig(f'/home/cole/Pictures/thesis_report/training_statistics/10_epoch_data_aug_Oct_3/{model_name}_training_{metric}.png')
+            plt.savefig(f'/home/cole/Pictures/thesis_report/training_statistics/{output_dir}/{model_name}_training_{metric}.png')
             plt.close()
         else:
             plt.show()
@@ -69,7 +71,7 @@ def view_training_statistics(model_name, dataset_name, metric='loss', save=False
 
         plt.figure(figsize=(20, 10))
 
-        plt.title(f"{metric} training statistics for all models on dataset: {dataset_name}")
+        plt.title(f"{metric} training statistics for all models on dataset: {dataset_name}", size=20)
 
         plt.plot(unet_train_stats[input_dict[metric][0]], label=f'unet training {metric}', color='red')
         plt.plot(unet_train_stats[input_dict[metric][1]], label=f'unet validation {metric}', color='red', linestyle='--')
@@ -80,17 +82,17 @@ def view_training_statistics(model_name, dataset_name, metric='loss', save=False
         plt.plot(segformer_train_stats[input_dict[metric][0]], label=f'segformer training {metric}', color='green')
         plt.plot(segformer_train_stats[input_dict[metric][1]], label=f'segformer validation {metric}', color='green', linestyle='--')
 
-        plt.xlabel('Epoch')
-        plt.ylabel(f'{metric}')
+        plt.xlabel('Epoch', size=20)
+        plt.ylabel(f'{metric}', size=20)
 
         plt.xlim(0, number_epochs)
         plt.ylim(0, 1.25)
 
-        plt.legend()
+        plt.legend(fontsize=20)
         plt.grid()
 
         if save == 'True':
-            plt.savefig(f'/home/cole/Pictures/thesis_report/training_statistics/10_epoch_data_aug_Oct_3/{dataset_name}_training_{metric}.png')
+            plt.savefig(f'/home/cole/Pictures/thesis_report/training_statistics/{output_dir}/{dataset_name}_training_{metric}.png')
             plt.close()
         else:
             plt.show()
@@ -156,7 +158,7 @@ def view_training_statistics(model_name, dataset_name, metric='loss', save=False
         plt.ylabel(f'{metric}')
 
         plt.xlim(0, number_epochs)
-        plt.ylim(0, 1.25)
+        # plt.ylim(0, 1.25)
 
         plt.legend()
         plt.grid()

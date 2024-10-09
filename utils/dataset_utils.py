@@ -69,6 +69,7 @@ def read_split_files(img_path_dir, label_path_dir, mask_path_dir, split_path, sp
                 label_paths[split].append(os.path.join(label_path_dir, f"{filename}.png"))
                 mask_paths[split].append(os.path.join(mask_path_dir, f"{filename}.png"))
                 filenames[split].append(filename)
+    return image_paths, label_paths, mask_paths, filenames
 
 def craft_datasetdict(img_path_dir, label_path_dir, mask_path_dir, split_path):
     split_names = ["train", "val", "test"]

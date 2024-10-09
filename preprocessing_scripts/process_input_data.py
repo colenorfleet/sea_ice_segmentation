@@ -5,7 +5,7 @@ import shutil
 from tqdm import tqdm
 
 
-dataset_path = '/home/cole/Documents/NTNU/big_dataset_june24/cole_dataset'
+dataset_path = '/home/cole/Documents/NTNU/from_Oskar/big_dataset_june24/cole_dataset'
 output_path = '/home/cole/Documents/NTNU/datasets'
 
 img_size = 512
@@ -32,8 +32,9 @@ if os.path.exists(os.path.join(output_path, 'otsu')):
     print('otsu directory already exists, deleting')
     shutil.rmtree(os.path.join(output_path, 'otsu'))
 
-os.makedirs(os.path.join(output_path, 'lidar_masks'))
-os.makedirs(os.path.join(output_path, 'images'))
+
+os.makedirs(os.path.join(output_path, 'lidar_masks'), exist_ok=True)
+os.makedirs(os.path.join(output_path, 'images'), exist_ok=True)
 
 os.makedirs(os.path.join(output_path, 'raw'))
 os.makedirs(os.path.join(output_path, 'raw', 'ice_masks'))
@@ -61,7 +62,7 @@ for i in tqdm(range(len(topo_files))):
     mask = np.where(mask > 0, 1, 0).astype('uint8')
 
     # Create hybrid ice mask -- should be a function
-    binary_topo_mask = np.where(topo > 0, 1, 0)
+    binary_topo_mask = np.where(topo > 0, 1, 0).astype('uint8')
 
     thresholded_gray_image = cv2.threshold(real_gray, 127, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
     binary_otsu_mask = np.where(thresholded_gray_image > 0, 1, 0)
@@ -78,9 +79,14 @@ for i in tqdm(range(len(topo_files))):
     # topo = cv2.resize(topo, (img_size, img_size))
     mask = cv2.resize(mask, (img_size, img_size))
 
-    binary_topo_mask = cv2.resize(binary_topo_mask.astype('float32'), (img_size, img_size))
+    binary_topo_mask = cv2.resize(binary_topo_mask, (img_size, img_size))
     closed_binary_topo_mask = cv2.resize(closed_binary_topo_mask, (img_size, img_size))
     final_binary_ice_mask = cv2.resize(final_binary_ice_mask, (img_size, img_size))
+
+    assert np.all((mask == 0) | (mask == 1)), 'Mask is not binary'
+    assert np.all((binary_topo_mask == 0) | (binary_topo_mask == 1)), 'Raw is not binary'
+    assert np.all((closed_binary_topo_mask == 0) | (closed_binary_topo_mask == 1)), 'Morph is not binary'
+    assert np.all((final_binary_ice_mask == 0) | (final_binary_ice_mask == 1)), 'Otsu is not binary'
     
     # Save images
     cv2.imwrite(os.path.join(output_path, 'images', filename + '.jpg'), real)

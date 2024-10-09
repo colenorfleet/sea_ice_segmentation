@@ -4,17 +4,13 @@ import sys
 import csv
 import torch
 from utils.dataset_utils import craft_datasetdict, collate_fn, SegmentationDataset
-from utils.dino_utils import SegmentationHead, DinoBinarySeg
 import albumentations as A
 from torch.utils.data import DataLoader
-from model.unet_brain_seg import UNet as UNetBrainSeg
-from torchvision.models.segmentation import deeplabv3_resnet50
-from torchvision.models.segmentation.deeplabv3 import DeepLabV3_ResNet50_Weights
 from tqdm.auto import tqdm
-from transformers import Dinov2Model, SegformerForSemanticSegmentation
+from transformers import SegformerForSemanticSegmentation
 from utils.lossfn_utils import calculate_metrics, calc_SIC
 from utils.plotting_utils import save_segmentation_image
-from segmentation_models_pytorch import PSPNet, DeepLabV3Plus, Unet, DeepLabV3
+from segmentation_models_pytorch import DeepLabV3Plus, Unet
 
 
 architecture = sys.argv[1]
@@ -29,9 +25,9 @@ print(f"all_dataset_flag: {all_dataset_flag}")
 
 dataset_path = "/home/cole/Documents/NTNU/datasets"
 
-image_dir = os.path.join(dataset_path, dataset_name, "images/")
+image_dir = os.path.join(dataset_path, "images/")
 label_dir = os.path.join(dataset_path, dataset_name, "ice_masks/")
-mask_dir = os.path.join(dataset_path, dataset_name, "lidar_masks/")
+mask_dir = os.path.join(dataset_path, "lidar_masks/")
 filename_split_dir = dataset_path
 
 dataset = craft_datasetdict(image_dir, label_dir, mask_dir, filename_split_dir)
@@ -92,18 +88,16 @@ csv_header = [
     "Sample",
     "BCE Loss",
     "IOU",
-    "Dice Coefficient",
+    "DICE",
     "Pixel Accuracy",
-    "Foreground Accuracy",
-    "Background Accuracy",
-    "False Negative Rate",
-    "SIC Label",
-    "SIC Prediction",
+    "Precision",
+    "Recall",
     "Number True Positive",
     "Number False Positive",
     "Number True Negative",
     "Number False Negative",
-    "F1 Score",
+    "SIC Label",
+    "SIC Pred",
 ]
 
 model.eval()
@@ -136,13 +130,13 @@ with open(csv_file, "w", newline="") as f:
                 logits = model(image)
 
             logits = logits.squeeze(1)
-            loss = criterion(logits, label.float()) #, mask)
+            loss = criterion(logits, label.float())
             loss = loss * mask
             mean_loss = loss.sum() / mask.sum()
 
             # calculate metrics
             pred_mask = torch.where(logits > 0.5, 1, 0)
-            iou, dice_coefficient, pixel_accuracy, foreground_accuracy, background_accuracy, false_negative_rate, num_TP, num_FP, num_TN, num_FN, f1_score = calculate_metrics(pred_mask, label, mask)
+            iou, dice, pixel_accuracy, precision, recall, num_TP, num_FP, num_TN, num_FN, f1_score = calculate_metrics(pred_mask, label, mask)
             sic_label = calc_SIC(label, mask)
             sic_pred = calc_SIC(pred_mask, mask)
 
@@ -150,18 +144,16 @@ with open(csv_file, "w", newline="") as f:
                 [filename[0],
                  mean_loss.item(),
                  iou,
-                 dice_coefficient,
+                 dice,
                  pixel_accuracy,
-                 foreground_accuracy,
-                 background_accuracy,
-                 false_negative_rate,
-                 sic_label,
-                 sic_pred,
+                 precision,
+                 recall,
                  num_TP,
                  num_FP,
                  num_TN,
                  num_FN,
-                 f1_score]
+                 sic_label,
+                 sic_pred]
                  )
             
             # save image

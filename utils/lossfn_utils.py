@@ -3,10 +3,7 @@ import torch
 from typing import Any
 import torch.nn as nn
 
-
-
 SMOOTH = 1e-8
-
 
 class DiceLoss(nn.Module):
     def __init__(self, model: nn.Module, l2_weight: float = 1e-8) -> None:
@@ -38,7 +35,8 @@ class DiceLoss(nn.Module):
         return total_loss
     
 
-def calculate_metrics(pred_mask: Any, true_mask: Any, lidar_mask: Any) -> torch.Tensor:#, mask: Any) -> torch.Tensor:
+def calculate_metrics(pred_mask: Any, true_mask: Any, lidar_mask: Any) -> torch.Tensor:
+    SMOOTH=1e-8
 
     assert torch.all((pred_mask==0) | (pred_mask==1)), "pred_mask must be binary"
     assert torch.all((true_mask==0) | (true_mask==1)), "true_mask must be binary"
@@ -57,22 +55,10 @@ def calculate_metrics(pred_mask: Any, true_mask: Any, lidar_mask: Any) -> torch.
 
     # Add a small epsilon to the denominator to avoid division by zero
     iou = (intersection + SMOOTH) / (union + SMOOTH)
-    dice_coefficient = (2 * intersection + SMOOTH) / (
+    dice_score = (2 * intersection + SMOOTH) / (
         torch.sum(pred_mask) + torch.sum(true_mask) + SMOOTH
     )
     pixel_accuracy = torch.sum(pred_mask == true_mask) / true_mask.numel()
-
-    # Accuracy for foreground (TP / Total Positives in true mask)
-    foreground_mask = (true_mask == 1)
-    foreground_accuracy = torch.sum(pred_mask[foreground_mask] == true_mask[foreground_mask]) / torch.sum(foreground_mask)
-
-    # Accuracy for background (TN / Total Negatives in true mask)
-    background_mask = (true_mask == 0)
-    background_accuracy = torch.sum(pred_mask[background_mask] == true_mask[background_mask]) / torch.sum(background_mask)
-
-    # False Negative Rate (FN / Total Positives in true mask)
-    false_negatives = torch.sum((pred_mask == 0) & (true_mask == 1))
-    false_positive_rate = false_negatives / torch.sum(foreground_mask)
 
     # Calculate TP, FP, TN, FN
     num_TP = torch.sum((pred_mask == 1) & (true_mask == 1))
@@ -80,36 +66,13 @@ def calculate_metrics(pred_mask: Any, true_mask: Any, lidar_mask: Any) -> torch.
     num_TN = torch.sum((pred_mask == 0) & (true_mask == 0))
     num_FN = torch.sum((pred_mask == 0) & (true_mask == 1))
 
+    assert num_TP + num_FP + num_TN + num_FN == true_mask.numel(), "TP, FP, TN, FN must sum to the total number of pixels"
+
     precision = num_TP.float() / (num_TP.float() + num_FP.float() + SMOOTH)
     recall = num_TP.float() / (num_TP.float() + num_FN.float() + SMOOTH)
     f1_score = 2 * (precision * recall) / (precision + recall + SMOOTH)
 
-    return iou.item(), dice_coefficient.item(), pixel_accuracy.item(), foreground_accuracy.item(), background_accuracy.item(), false_positive_rate.item(), num_TP.item(), num_FP.item(), num_TN.item(), num_FN.item(), f1_score.item()
-
-
-
-def calc_SIC(label, lidar_mask):
-
-    
-    # count number of pixels = 1 and = 0
-    # apply LiDAR mask
-    # SIC = # of ice pixels / total # of pixels in LiDAR mask
-
-    img_size = label.size()[1] * label.size()[2]
-
-    label = label[lidar_mask==1]
-
-    # find # of pixels in LiDAR mask
-    total_pixels = torch.sum(lidar_mask)
-
-    # find # of ice pixels
-    ice_pixels = torch.sum(label)
-    
-    sic_total = (ice_pixels / img_size)
-    sic_lidar = (ice_pixels / total_pixels)
-
-    return sic_lidar.item()
-
+    return iou.item(), dice_score.item(), pixel_accuracy.item(), precision.item(), recall.item(), num_TP.item(), num_FP.item(), num_TN.item(), num_FN.item()
 
 def quick_metrics(pred_mask: Any, true_mask: Any, lidar_mask: Any) -> torch.Tensor:
 
@@ -130,6 +93,10 @@ def quick_metrics(pred_mask: Any, true_mask: Any, lidar_mask: Any) -> torch.Tens
     intersection = torch.sum(pred_mask * true_mask)
     union = torch.sum((pred_mask + true_mask) > 0.5)
 
+    dice_score = (2 * intersection + SMOOTH) / (
+        torch.sum(pred_mask) + torch.sum(true_mask) + SMOOTH
+    )
+
     # Add a small epsilon to the denominator to avoid division by zero
     iou = (intersection + SMOOTH) / (union + SMOOTH)
 
@@ -143,4 +110,21 @@ def quick_metrics(pred_mask: Any, true_mask: Any, lidar_mask: Any) -> torch.Tens
     recall = num_TP.float() / (num_TP.float() + num_FN.float() + SMOOTH)
     f1_score = 2 * (precision * recall) / (precision + recall + SMOOTH)
 
-    return iou.item(), f1_score.item()
+    return iou.item(), dice_score.item()
+
+
+def calc_SIC(label, lidar_mask):
+
+    # SIC = # of ice pixels / total # of pixels in LiDAR mask
+    img_size = label.size()[1] * label.size()[2]
+    label = label[lidar_mask==1]
+
+    # find # of pixels in LiDAR mask
+    total_pixels = torch.sum(lidar_mask)
+
+    # find # of ice pixels
+    ice_pixels = torch.sum(label)
+    sic_lidar = (ice_pixels / total_pixels)
+
+    return sic_lidar.item()
+

@@ -2,6 +2,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import cv2
 
 
 
@@ -17,6 +18,12 @@ def save_segmentation_image(image, target, prediction, filename, img_output_path
 
     target_img = (target * 255).astype(np.uint8)
     prediction_img = (prediction * 255).astype(np.uint8)
+
+    # save prediction image
+    prediction_path = os.path.join(img_output_path, 'prediction')
+    comparison_path = os.path.join(img_output_path, 'comparison')
+    os.makedirs(prediction_path, exist_ok=True)
+    cv2.imwrite(os.path.join(prediction_path, filename[0] + ".png"), prediction_img)
 
     # 
 
@@ -42,9 +49,8 @@ def save_segmentation_image(image, target, prediction, filename, img_output_path
     ax3.set_title('Pixel Classification')
     ax3.axis('off')
 
-    plt.savefig(os.path.join(img_output_path, filename[0] + ".png"))
+    plt.savefig(os.path.join(comparison_path, filename[0] + ".png"))
     plt.close(fig)
-
 
     return
 
