@@ -1,7 +1,8 @@
 
 import torch
-from typing import Any
+from typing import Any, Tuple
 import torch.nn as nn
+import numpy as np
 
 SMOOTH = 1e-8
 
@@ -127,4 +128,72 @@ def calc_SIC(label, lidar_mask):
     sic_lidar = (ice_pixels / total_pixels)
 
     return sic_lidar.item()
+
+def calc_SIC_np(label, lidar_mask):
+
+    assert np.all((label == 0) | (label == 1)), "label must be binary"
+    assert np.all((lidar_mask == 0) | (lidar_mask == 1)), "lidar mask must be binary"
+
+    # SIC = # of ice pixels / total # of pixels in LiDAR mask
+    label = label[lidar_mask==1]
+
+    # find # of pixels in LiDAR mask
+    total_pixels = np.count_nonzero(lidar_mask==1)
+
+    # find # of ice pixels
+    ice_pixels = np.count_nonzero(label==1)
+    sic_lidar = (ice_pixels / total_pixels)
+
+    return sic_lidar
+    
+
+def calculate_metrics_numpy(pred_mask: Any, true_mask: Any, lidar_mask: Any) -> Tuple[float, float, float, float, float, int, int, int, int]:
+    SMOOTH = 1e-8
+
+    assert np.all((pred_mask == 0) | (pred_mask == 1)), "pred_mask must be binary"
+    assert np.all((true_mask == 0) | (true_mask == 1)), "true_mask must be binary"
+    assert np.all((lidar_mask == 0) | (lidar_mask == 1)), "lidar_mask must be binary"
+
+    # Include LiDAR mask in computation
+    valid_lidar_mask = (lidar_mask == 1)
+    pred_mask = pred_mask[valid_lidar_mask]
+    true_mask = true_mask[valid_lidar_mask]
+
+    pred_mask = pred_mask.astype(np.float32)
+    true_mask = true_mask.astype(np.float32)
+
+    intersection = np.sum(pred_mask * true_mask)
+    union = np.sum((pred_mask + true_mask) > 0.5)
+
+    # Add a small epsilon to the denominator to avoid division by zero
+    iou = (intersection + SMOOTH) / (union + SMOOTH)
+    dice_score = (2 * intersection + SMOOTH) / (np.sum(pred_mask) + np.sum(true_mask) + SMOOTH)
+    pixel_accuracy = np.sum(pred_mask == true_mask) / true_mask.size
+
+    # Calculate TP, FP, TN, FN
+    num_TP = np.sum((pred_mask == 1) & (true_mask == 1))
+    num_FP = np.sum((pred_mask == 1) & (true_mask == 0))
+    num_TN = np.sum((pred_mask == 0) & (true_mask == 0))
+    num_FN = np.sum((pred_mask == 0) & (true_mask == 1))
+
+    assert num_TP + num_FP + num_TN + num_FN == true_mask.size, "TP, FP, TN, FN must sum to the total number of pixels"
+
+    precision = num_TP / (num_TP + num_FP + SMOOTH)
+    recall = num_TP / (num_TP + num_FN + SMOOTH)
+    f1_score = 2 * (precision * recall) / (precision + recall + SMOOTH)
+
+    metric_dict = {
+        "iou": iou,
+        "dice_score": dice_score,
+        "pixel_accuracy": pixel_accuracy,
+        "precision": precision,
+        "recall": recall,
+        "num_TP": num_TP,
+        "num_FP": num_FP,
+        "num_TN": num_TN,
+        "num_FN": num_FN,
+    }
+
+    return metric_dict
+
 

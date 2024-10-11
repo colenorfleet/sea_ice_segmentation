@@ -11,7 +11,7 @@ do
         do
             echo "evaluating $model on $dataset"
 
-            python evaluate_testset.py $model $dataset
+            python evaluate_testset.py $model $dataset False
             
     done
 done

@@ -62,9 +62,11 @@ elif architecture == 'unet':
     model = Unet(encoder_name='resnet101', encoder_weights='imagenet', in_channels=3, classes=1)
 
 
-if all_dataset_flag:
+if all_dataset_flag == 'True':
+    print("Using all dataset model")
     data_directory = os.path.join('./all_dataset_output', architecture)
 else:
+    print("Using regular dataset model")
     data_directory = os.path.join('./output', architecture, dataset_name)
 
 model.load_state_dict(torch.load(os.path.join(data_directory, "best_ice_seg_model.pth")))
@@ -75,7 +77,7 @@ model.to(device)
 criterion = torch.nn.BCEWithLogitsLoss(reduction='none')
 
 # Make output directories
-if all_dataset_flag:
+if all_dataset_flag == 'True':
     test_data_output_dir = os.path.join("./test_data_output/all_dataset_train", architecture, dataset_name)
 else:
     test_data_output_dir = os.path.join("./test_data_output", architecture, dataset_name)
@@ -87,6 +89,7 @@ csv_file = os.path.abspath(os.path.join(test_data_output_dir, "evaluation_scores
 csv_header = [
     "Sample",
     "BCE Loss",
+    "Total BCE Loss",
     "IOU",
     "DICE",
     "Pixel Accuracy",
@@ -131,18 +134,20 @@ with open(csv_file, "w", newline="") as f:
 
             logits = logits.squeeze(1)
             loss = criterion(logits, label.float())
+            unmasked_mean_loss = loss.sum() / (img_size * img_size)
             loss = loss * mask
             mean_loss = loss.sum() / mask.sum()
 
             # calculate metrics
             pred_mask = torch.where(logits > 0.5, 1, 0)
-            iou, dice, pixel_accuracy, precision, recall, num_TP, num_FP, num_TN, num_FN, f1_score = calculate_metrics(pred_mask, label, mask)
+            iou, dice, pixel_accuracy, precision, recall, num_TP, num_FP, num_TN, num_FN = calculate_metrics(pred_mask, label, mask)
             sic_label = calc_SIC(label, mask)
             sic_pred = calc_SIC(pred_mask, mask)
 
             csv_writer.writerow(
                 [filename[0],
                  mean_loss.item(),
+                 unmasked_mean_loss.item(),
                  iou,
                  dice,
                  pixel_accuracy,

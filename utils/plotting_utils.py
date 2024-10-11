@@ -23,6 +23,7 @@ def save_segmentation_image(image, target, prediction, filename, img_output_path
     prediction_path = os.path.join(img_output_path, 'prediction')
     comparison_path = os.path.join(img_output_path, 'comparison')
     os.makedirs(prediction_path, exist_ok=True)
+    os.makedirs(comparison_path, exist_ok=True)
     cv2.imwrite(os.path.join(prediction_path, filename[0] + ".png"), prediction_img)
 
     # 
@@ -96,3 +97,28 @@ def plot_pixel_classification(pred_mask, true_mask):
 
 
     return result
+
+
+def create_mask(image, topo, type):
+
+    if type == 'raw':
+        raw_topo_mask = np.where(topo > 0, 1, 0).astype('uint8')
+        return raw_topo_mask
+
+    elif type == 'morph':
+        raw_topo_mask = np.where(topo > 0, 1, 0).astype('uint8')
+        close_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3))
+        morph_binary_ice_mask = cv2.morphologyEx(raw_topo_mask.astype('uint8'), cv2.MORPH_CLOSE, close_kernel, iterations=1)
+        return morph_binary_ice_mask
+
+    elif type == 'otsu':
+        raw_topo_mask = np.where(topo > 0, 1, 0).astype('uint8')
+        thresholded_gray_image = cv2.threshold(image, 127, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+        binary_otsu_mask = np.where(thresholded_gray_image > 0, 1, 0)
+        binary_ice_mask = np.where((raw_topo_mask + binary_otsu_mask) > 1, 1, 0)
+        close_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3))
+        otsu_binary_ice_mask = cv2.morphologyEx(binary_ice_mask.astype('uint8'), cv2.MORPH_CLOSE, close_kernel, iterations=1)
+        return otsu_binary_ice_mask
+
+    else:
+        raise ValueError("Invalid mask type. Must be 'raw', 'morph', or 'otsu'.")

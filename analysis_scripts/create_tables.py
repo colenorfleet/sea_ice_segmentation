@@ -263,32 +263,32 @@ def create_tables(mode='evaluation_model'):
         ex_file = pd.read_csv(f'{dir_path}/cv_output/deeplabv3plus/morph/training_logs_fold_3.csv')
         num_epochs_ex = len(ex_file['Epoch'])
         csv_file = os.path.abspath(os.path.join(output_path, "cv_training_statistics_{}.csv".format(date.today())))
-        csv_header = ['Model', 'Dataset', 'Fold', 'Train Loss', 'Val Loss', 'Train IOU', 'Val IOU', 'Train DICE Score', 'Val DICE Score']
+        csv_header = ['Dataset', 'Model', 'Fold', 'Train Loss', 'Val Loss', 'Train IOU', 'Val IOU', 'Train DICE Score', 'Val DICE Score']
 
         with open(csv_file, mode='w') as file:
             csv_writer = csv.writer(file)
             csv_writer.writerow(csv_header)
 
-            for model in models:
-                for dataset in datasets:
+            for dataset in datasets:
+                for model in models:
                     for fold in range(5):
 
                         training_stats = pd.read_csv(f'{dir_path}/cv_output/{model}/{dataset}/training_logs_fold_{fold}.csv')
                         assert num_epochs_ex == len(training_stats['Epoch']), "Number of epochs do not match"
 
-                        avgs = training_stats.mean().round(2)
+                        last_row = training_stats.tail(1).round(2)
 
                         csv_writer.writerow(
                             [
-                                model,
                                 dataset,
+                                model,
                                 fold+1,
-                                f"{avgs['Avg BCE Train Loss']:0.2f}",
-                                f"{avgs['Avg BCE Val Loss']:0.2f}",
-                                f"{avgs['Avg Train IOU']:0.2f}",
-                                f"{avgs['Avg Val IOU']:0.2f}",
-                                f"{avgs['Avg Train DICE']:0.2f}",
-                                f"{avgs['Avg Val DICE']:0.2f}"
+                                f"{last_row['Avg BCE Train Loss'].round(2).item()}",
+                                f"{last_row['Avg BCE Val Loss'].round(2).item()}",
+                                f"{last_row['Avg Train IOU'].round(2).item()}",
+                                f"{last_row['Avg Val IOU'].round(2).item()}",
+                                f"{last_row['Avg Train DICE'].round(2).item()}",
+                                f"{last_row['Avg Val DICE'].round(2).item()}"
                             ]
                         )
 

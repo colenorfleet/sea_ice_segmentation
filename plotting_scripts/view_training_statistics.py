@@ -13,7 +13,7 @@ input_dict = {'Loss': ['Avg BCE Train Loss', 'Avg BCE Val Loss'],
 model_names = ['unet', 'deeplabv3plus', 'segformer']
 dataset_names = ['raw', 'morph', 'otsu']
 
-output_dir = '15_epoch_oct_7'
+output_dir = '15_epoch_oct_10'
 
 def view_training_statistics(model_name, dataset_name, metric='loss', save=False):
 
@@ -29,25 +29,26 @@ def view_training_statistics(model_name, dataset_name, metric='loss', save=False
 
         number_epochs = len(raw_train_stats['Avg BCE Train Loss'])-1
 
-        plt.figure(figsize=(20, 10))
+        plt.figure(figsize=(10, 5), facecolor='lightgray')
 
-        plt.title(f"{metric} training statistics for {model_name} on ALL datasets", size=20)
+        # plt.title(f"{metric} training statistics for {model_name} on ALL datasets", size=20)
 
-        plt.plot(raw_train_stats[input_dict[metric][0]], label=f'raw dataset training {metric}', color='red')
-        plt.plot(morph_train_stats[input_dict[metric][0]], label=f'morph dataset training {metric}', color='blue')
-        plt.plot(otsu_train_stats[input_dict[metric][0]], label=f'otsu dataset training {metric}', color='green')
+        plt.plot(raw_train_stats[input_dict[metric][0]], label=f'raw dataset training {metric}', color='tab:blue')
+        plt.plot(morph_train_stats[input_dict[metric][0]], label=f'morph dataset training {metric}', color='tab:orange')
+        plt.plot(otsu_train_stats[input_dict[metric][0]], label=f'otsu dataset training {metric}', color='tab:green')
 
-        plt.plot(raw_train_stats[input_dict[metric][1]], label=f'raw dataset validation {metric}', color = 'red', linestyle='--')
-        plt.plot(morph_train_stats[input_dict[metric][1]], label=f'morph dataset validation {metric}', color='blue', linestyle='--')
-        plt.plot(otsu_train_stats[input_dict[metric][1]], label=f'otsu dataset validation {metric}', color='green', linestyle='--')
+        plt.plot(raw_train_stats[input_dict[metric][1]], label=f'raw dataset validation {metric}', color = 'tab:blue', linestyle='--')
+        plt.plot(morph_train_stats[input_dict[metric][1]], label=f'morph dataset validation {metric}', color='tab:orange', linestyle='--')
+        plt.plot(otsu_train_stats[input_dict[metric][1]], label=f'otsu dataset validation {metric}', color='tab:green', linestyle='--')
 
-        plt.xlabel('Epoch', size=20)
-        plt.ylabel(f"{metric}", size=20)
+
+        plt.xlabel('Epoch', size=10)
+        plt.ylabel(f"{metric}", size=10)
 
         plt.xlim(0, number_epochs)
         plt.ylim(0, 1.25)
 
-        plt.legend(fontsize=20)
+        plt.legend(fontsize=10)
         plt.grid()
 
         if save == 'True':
@@ -69,26 +70,26 @@ def view_training_statistics(model_name, dataset_name, metric='loss', save=False
         number_epochs = len(unet_train_stats['Avg BCE Train Loss'])-1
         # For now let's just plot loss
 
-        plt.figure(figsize=(20, 10))
+        plt.figure(figsize=(6, 4), facecolor='lightgray')
 
-        plt.title(f"{metric} training statistics for all models on dataset: {dataset_name}", size=20)
+        # plt.title(f"{metric} training statistics for all models on dataset: {dataset_name}", size=20)
 
-        plt.plot(unet_train_stats[input_dict[metric][0]], label=f'unet training {metric}', color='red')
-        plt.plot(unet_train_stats[input_dict[metric][1]], label=f'unet validation {metric}', color='red', linestyle='--')
+        plt.plot(unet_train_stats[input_dict[metric][0]], label=f'unet training {metric}', color='tab:blue')
+        plt.plot(unet_train_stats[input_dict[metric][1]], label=f'unet validation {metric}', color='tab:blue', linestyle='--')
 
-        plt.plot(deeplabv3plus_train_stats[input_dict[metric][0]], label=f'deeplabv3plus training {metric}', color='blue')
-        plt.plot(deeplabv3plus_train_stats[input_dict[metric][1]], label=f'deeplabv3plus validation {metric}', color='blue', linestyle='--')
+        plt.plot(deeplabv3plus_train_stats[input_dict[metric][0]], label=f'deeplabv3plus training {metric}', color='tab:orange')
+        plt.plot(deeplabv3plus_train_stats[input_dict[metric][1]], label=f'deeplabv3plus validation {metric}', color='tab:orange', linestyle='--')
 
-        plt.plot(segformer_train_stats[input_dict[metric][0]], label=f'segformer training {metric}', color='green')
-        plt.plot(segformer_train_stats[input_dict[metric][1]], label=f'segformer validation {metric}', color='green', linestyle='--')
+        plt.plot(segformer_train_stats[input_dict[metric][0]], label=f'segformer training {metric}', color='tab:green')
+        plt.plot(segformer_train_stats[input_dict[metric][1]], label=f'segformer validation {metric}', color='tab:green', linestyle='--')
 
-        plt.xlabel('Epoch', size=20)
-        plt.ylabel(f'{metric}', size=20)
+        plt.xlabel('Epoch', size=10)
+        plt.ylabel(f'{metric}', size=10)
 
         plt.xlim(0, number_epochs)
         plt.ylim(0, 1.25)
 
-        plt.legend(fontsize=20)
+        plt.legend(fontsize=10)
         plt.grid()
 
         if save == 'True':
@@ -141,14 +142,14 @@ def view_training_statistics(model_name, dataset_name, metric='loss', save=False
         plt.vlines([4, 9], 0, 1.25, color='black', linestyle='--')
         
 
-        plt.plot(unet_train_stats[input_dict[metric][0]], label=f'unet training {metric}', color='red')
-        plt.plot(unet_train_stats[input_dict[metric][1]], label=f'unet validation {metric}', color='red', linestyle='--')
+        plt.plot(unet_train_stats[input_dict[metric][0]], label=f'unet training {metric}', color='tab:blue')
+        plt.plot(unet_train_stats[input_dict[metric][1]], label=f'unet validation {metric}', color='tab:blue', linestyle='--')
 
-        plt.plot(deeplabv3plus_train_stats[input_dict[metric][0]], label=f'deeplabv3plus training {metric}', color='blue')
-        plt.plot(deeplabv3plus_train_stats[input_dict[metric][1]], label=f'deeplabv3plus validation {metric}', color='blue', linestyle='--')
+        plt.plot(deeplabv3plus_train_stats[input_dict[metric][0]], label=f'deeplabv3plus training {metric}', color='tab:orange')
+        plt.plot(deeplabv3plus_train_stats[input_dict[metric][1]], label=f'deeplabv3plus validation {metric}', color='tab:orange', linestyle='--')
 
-        plt.plot(segformer_train_stats[input_dict[metric][0]], label=f'segformer training {metric}', color='green')
-        plt.plot(segformer_train_stats[input_dict[metric][1]], label=f'segformer validation {metric}', color='green', linestyle='--')
+        plt.plot(segformer_train_stats[input_dict[metric][0]], label=f'segformer training {metric}', color='tab:green')
+        plt.plot(segformer_train_stats[input_dict[metric][1]], label=f'segformer validation {metric}', color='tab:green', linestyle='--')
 
         plt.text(1.5, -0.1, 'Raw Dataset', fontsize=12)
         plt.text(5.5, -0.1, 'Morph Dataset', fontsize=12)

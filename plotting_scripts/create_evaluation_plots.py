@@ -8,7 +8,7 @@ def compare_model_performance():
 
     models = ['unet', 'deeplabv3plus', 'segformer']
     datasets = ['raw', 'morph', 'otsu']
-    metrics = ['IOU', 'F1 Score', 'Foreground Accuracy']
+    metrics = ['IOU', 'DICE', 'Pixel Accuracy', 'Precision', 'Recall']
 
     for model in models:
         raw_stats = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/test_data_output/{model}/raw/evaluation_scores.csv')
@@ -43,18 +43,19 @@ def compare_model_performance():
 
         for metric in metrics:
 
-            plt.figure(figsize=(20, 10))
-            plt.title(f'Test Set Evaluation for all models on {dataset} based on {metric}')
+            plt.figure(figsize=(15, 8), facecolor='lightgray')
+            # plt.title(f'Test Set Evaluation for all models on {dataset} based on {metric}')
             plt.plot(unet_stats[metric], label=f'Unet, mean: {unet_stats[metric].mean():.4f}', color='tab:blue')
             plt.plot(deeplabv3plus_stats[metric], label=f'Deeplabv3plus, mean: {deeplabv3plus_stats[metric].mean():.4f}', color='tab:orange')
             plt.plot(segformer_stats[metric], label=f'Segformer, mean: {segformer_stats[metric].mean():.4f}', color='tab:green')
 
             plt.fill_between(deeplabv3plus_stats['SIC Label'].index, deeplabv3plus_stats['SIC Label'], 0, color='gray', alpha=0.2)
 
-            plt.xlabel('Image Number')
-            plt.ylabel(metric)
-            plt.legend()
+            plt.xlabel('Image Number', fontsize=18)
+            plt.ylabel(metric, fontsize=18)
+            plt.legend(fontsize=18)
             plt.grid()
+            plt.tight_layout()
             plt.ylim(0, 1.1)
             plt.savefig(f'{output_path}/{dataset}_{metric}.png')
             plt.close()
