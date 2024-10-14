@@ -97,6 +97,22 @@ def craft_cv_datasetdict(img_path_dir, label_path_dir, mask_path_dir, split_path
 
     return DatasetDict({"cv_train": cv_train_dataset, "val": None, "test": None})
 
+def craft_labelled_dataset(image_dir, label_dir, mask_dir):
+    image_paths, label_paths, mask_paths, filenames = [], [], [], []
+    images = os.listdir(image_dir)
+    labels = os.listdir(label_dir)
+    masks = os.listdir(mask_dir)
+    length = len(images)
+    assert length == len(labels) == len(masks), "Number of files in directories do not match"
+
+    for i in range(length):
+        filenames.append(images[i].split('.')[0])
+        image_paths.append(os.path.join(image_dir, images[i]))
+        label_paths.append(os.path.join(label_dir, labels[i]))
+        mask_paths.append(os.path.join(mask_dir, masks[i]))
+
+    return create_dataset(image_paths, label_paths, mask_paths, filenames)
+
 
 
 class Dinov2forSemanticSegmentation(Dinov2PreTrainedModel):

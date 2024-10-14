@@ -3,7 +3,7 @@ import os
 import sys
 import csv
 import torch
-from utils.dataset_utils import craft_datasetdict, collate_fn, SegmentationDataset
+from utils.dataset_utils import craft_labelled_dataset, collate_fn, SegmentationDataset
 import albumentations as A
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
@@ -12,39 +12,31 @@ from utils.lossfn_utils import calculate_metrics, calc_SIC
 from utils.plotting_utils import save_segmentation_image
 from segmentation_models_pytorch import DeepLabV3Plus, Unet
 
-
 architecture = sys.argv[1]
-dataset_name = sys.argv[2]
-all_dataset_flag = sys.argv[3]
+eval_dataset_name = sys.argv[2] # should be GoNorth or roboflow
+# train_dataset_name = sys.argv[3] # should be raw, morph, otsu 
 
 print(f"Architecture: {architecture}")
-print(f"Dataset: {dataset_name}")
-print(f"all_dataset_flag: {all_dataset_flag}")
+print(f"Eval Dataset: {eval_dataset_name}")
+# print(f"Train Dataset: {train_dataset_name}")
 
-### create dataset
+dataset_path = "/home/cole/Documents/NTNU/datasets/labelled"
+image_dir = os.path.join(dataset_path, eval_dataset_name, "images/")
+label_dir = os.path.join(dataset_path, eval_dataset_name, "ice_masks/")
+mask_dir = os.path.join(dataset_path, eval_dataset_name, "lidar_masks/")
 
-dataset_path = "/home/cole/Documents/NTNU/datasets"
-
-image_dir = os.path.join(dataset_path, "images/")
-label_dir = os.path.join(dataset_path, dataset_name, "ice_masks/")
-mask_dir = os.path.join(dataset_path, "lidar_masks/")
-filename_split_dir = dataset_path
-
-dataset = craft_datasetdict(image_dir, label_dir, mask_dir, filename_split_dir)
-
+dataset = craft_labelled_dataset(image_dir, label_dir, mask_dir)
 
 ADE_MEAN = [0.4685, 0.4731, 0.4766]
 ADE_STD = [0.2034, 0.1987, 0.1968]
 img_size = 512
-
 
 val_transform = A.Compose([
         A.Resize(width=img_size, height=img_size),
         A.Normalize(mean=ADE_MEAN, std=ADE_STD)],
         additional_targets={"lidar_mask": "mask"})
 
-
-test_dataset = SegmentationDataset(dataset["test"], transform=val_transform)
+test_dataset = SegmentationDataset(dataset, transform=val_transform)
 test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False, collate_fn=collate_fn)
 
 if architecture == 'segformer':
@@ -61,27 +53,17 @@ elif architecture == 'deeplabv3plus':
 elif architecture == 'unet':
     model = Unet(encoder_name='resnet101', encoder_weights='imagenet', in_channels=3, classes=1)
 
-
-if all_dataset_flag == 'True':
-    print("Using all dataset model")
-    data_directory = os.path.join('./all_dataset_output', architecture)
-else:
-    print("Using regular dataset model")
-    data_directory = os.path.join('./output', architecture, dataset_name)
+# data_directory = os.path.join('./output', architecture, train_dataset_name)
+data_directory = os.path.join('./all_dataset_output', architecture)
 
 model.load_state_dict(torch.load(os.path.join(data_directory, "best_ice_seg_model.pth")))
-
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
 criterion = torch.nn.BCEWithLogitsLoss(reduction='none')
 
-# Make output directories
-if all_dataset_flag == 'True':
-    test_data_output_dir = os.path.join("./test_data_output/all_dataset_train", architecture, dataset_name)
-else:
-    test_data_output_dir = os.path.join("./test_data_output", architecture, dataset_name)
-
+# test_data_output_dir = os.path.join("./all_dataset_labelled_output", architecture, eval_dataset_name, train_dataset_name)
+test_data_output_dir = os.path.join("./all_dataset_labelled_output", architecture, eval_dataset_name)
 os.makedirs(test_data_output_dir, exist_ok=True)
 
 # Logging
@@ -119,8 +101,7 @@ with open(csv_file, "w", newline="") as f:
             label = batch["label"].to(device)
             mask = batch["mask"].to(device)
             filename = batch["filename"]
-
-
+            
             # forward pass
             if architecture == 'segformer':
                 outputs = model(pixel_values=image)

@@ -115,7 +115,8 @@ def create_tables(mode='evaluation_model'):
                         [
                             model,
                             dataset,
-                            f"{avgs['BCE Loss']:0.2f}", 
+                            f"{avgs['BCE Loss']:0.2f}",
+                            f"{avgs['Total BCE Loss']:0.2f}",
                             f"{avgs['IOU']:0.2f}",
                             f"{avgs['DICE']:0.2f}",
                             f"{avgs['Pixel Accuracy']:0.2f}",
@@ -153,7 +154,8 @@ def create_tables(mode='evaluation_model'):
                         [
                             dataset,
                             model,
-                            f"{avgs['BCE Loss']:0.2f}", 
+                            f"{avgs['BCE Loss']:0.2f}",
+                            f"{avgs['Total BCE Loss']:0.2f}",
                             f"{avgs['IOU']:0.2f}",
                             f"{avgs['DICE']:0.2f}",
                             f"{avgs['Pixel Accuracy']:0.2f}",
@@ -291,6 +293,47 @@ def create_tables(mode='evaluation_model'):
                                 f"{last_row['Avg Val DICE'].round(2).item()}"
                             ]
                         )
+
+
+    elif mode=='labelled_evaluation':
+        
+        csv_file = os.path.abspath(os.path.join(output_path, "labelled_dataset_performance_{}.csv".format(date.today())))
+        csv_header = ['Subset', 'Model', 'Dataset', 'IOU', 'DICE', 'Pixel Accuracy', 'Precision', 'Recall', 'Number True Positive', 'Number False Positive', 'Number True Negative', 'Number False Negative', 'SIC Manual', 'SIC Processed']
+
+        with open(csv_file, mode='w') as file:
+            csv_writer = csv.writer(file)
+            csv_writer.writerow(csv_header)
+
+            for label_subset in ['roboflow', 'goNorth']:
+
+                for model in models:
+
+                    for dataset in datasets:
+
+                        df_label = pd.read_csv(f'{dir_path}/labelled_output/{model}/{label_subset}/{dataset}/evaluation_scores.csv')
+
+                        avgs = df_label.mean().round(2)
+
+                        csv_writer.writerow(
+                            [
+                                label_subset,
+                                model,
+                                dataset,
+                                f"{avgs['IOU']:0.2f}",
+                                f"{avgs['DICE']:0.2f}",
+                                f"{avgs['Pixel Accuracy']:0.2f}",
+                                f"{avgs['Precision']:0.2f}",
+                                f"{avgs['Recall']:0.2f}",
+                                int(avgs['Number True Positive']),
+                                int(avgs['Number False Positive']),
+                                int(avgs['Number True Negative']),
+                                int(avgs['Number False Negative']),
+                                f"{avgs['SIC Label']:0.2f}",
+                                f"{avgs['SIC Pred']:0.2f}"
+                            ]
+                        )
+
+        
 
 
 
