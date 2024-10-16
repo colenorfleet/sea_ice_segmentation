@@ -1,14 +1,18 @@
+import sys
+sys.path.insert(0, '/home/cole/Documents/NTNU/sea_ice_segmentation')
+
 import os
 import numpy as np
 import cv2
 import shutil
 from tqdm import tqdm
+from utils.plotting_utils import create_mask
 
 
 dataset_path = '/home/cole/Documents/NTNU/from_Oskar/big_dataset_june24/cole_dataset'
 output_path = '/home/cole/Documents/NTNU/datasets'
 
-img_size = 512
+img_size = 256
 
 assert 'topo' and 'mask' and 'real' in os.listdir(dataset_path), 'topo, mask, or real not in dataset folder'
 
@@ -54,49 +58,37 @@ for i in tqdm(range(len(topo_files))):
     mask = cv2.imread(os.path.join(dataset_path, 'mask', mask_files[i]), cv2.IMREAD_GRAYSCALE)
     real = cv2.imread(os.path.join(dataset_path, 'real', real_files[i]), cv2.IMREAD_COLOR)
     real_gray = cv2.cvtColor(real, cv2.COLOR_BGR2GRAY)
+    mask = np.where(mask>0, 1, 0).astype('uint8')
 
     assert topo_files[i] == mask_files[i] == real_files[i], 'Files names are not the same'
     filename = topo_files[i][:-4]
-    
-    # Convert lidar mask to binary
-    mask = np.where(mask > 0, 1, 0).astype('uint8')
 
-    # Create hybrid ice mask -- should be a function
-    binary_topo_mask = np.where(topo > 0, 1, 0).astype('uint8')
-
-    thresholded_gray_image = cv2.threshold(real_gray, 127, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
-    binary_otsu_mask = np.where(thresholded_gray_image > 0, 1, 0)
-
-    binary_ice_mask = np.where((binary_topo_mask + binary_otsu_mask) > 1, 1, 0)
-
-    close_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3))
-    final_binary_ice_mask = cv2.morphologyEx(binary_ice_mask.astype('uint8'), cv2.MORPH_CLOSE, close_kernel, iterations=1)
-
-    closed_binary_topo_mask = cv2.morphologyEx(binary_topo_mask.astype('uint8'), cv2.MORPH_CLOSE, close_kernel, iterations=1)
+    raw_mask = create_mask(real_gray, topo, 'raw')
+    morph_mask = create_mask(real_gray, topo, 'morph')
+    otsu_mask = create_mask(real_gray, topo, 'otsu')
 
     # Resize real and mask
     real = cv2.resize(real, (img_size, img_size))
-    # topo = cv2.resize(topo, (img_size, img_size))
     mask = cv2.resize(mask, (img_size, img_size))
 
-    binary_topo_mask = cv2.resize(binary_topo_mask, (img_size, img_size))
-    closed_binary_topo_mask = cv2.resize(closed_binary_topo_mask, (img_size, img_size))
-    final_binary_ice_mask = cv2.resize(final_binary_ice_mask, (img_size, img_size))
+    raw_mask = cv2.resize(raw_mask, (img_size, img_size))
+    morph_mask = cv2.resize(morph_mask, (img_size, img_size))
+    otsu_mask = cv2.resize(otsu_mask, (img_size, img_size))
 
     assert np.all((mask == 0) | (mask == 1)), 'Mask is not binary'
-    assert np.all((binary_topo_mask == 0) | (binary_topo_mask == 1)), 'Raw is not binary'
-    assert np.all((closed_binary_topo_mask == 0) | (closed_binary_topo_mask == 1)), 'Morph is not binary'
-    assert np.all((final_binary_ice_mask == 0) | (final_binary_ice_mask == 1)), 'Otsu is not binary'
+    assert np.all((raw_mask == 0) | (raw_mask == 1)), 'Raw is not binary'
+    assert np.all((morph_mask == 0) | (morph_mask == 1)), 'Morph is not binary'
+    assert np.all((otsu_mask == 0) | (otsu_mask == 1)), 'Otsu is not binary'
     
     # Save images
     cv2.imwrite(os.path.join(output_path, 'images', filename + '.jpg'), real)
     cv2.imwrite(os.path.join(output_path, 'lidar_masks', filename + '.png'), mask*255)
 
     # raw
-    cv2.imwrite(os.path.join(output_path, 'raw', 'ice_masks', filename + '.png'), binary_topo_mask*255)
+    cv2.imwrite(os.path.join(output_path, 'raw', 'ice_masks', filename + '.png'), raw_mask*255)
 
     # morph
-    cv2.imwrite(os.path.join(output_path, 'morph', 'ice_masks', filename + '.png'), closed_binary_topo_mask*255)
+    cv2.imwrite(os.path.join(output_path, 'morph', 'ice_masks', filename + '.png'), morph_mask*255)
 
     # otsu
-    cv2.imwrite(os.path.join(output_path, 'otsu', 'ice_masks', filename + '.png'), final_binary_ice_mask*255)
+    cv2.imwrite(os.path.join(output_path, 'otsu', 'ice_masks', filename + '.png'), otsu_mask*255)

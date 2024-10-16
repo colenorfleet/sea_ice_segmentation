@@ -99,7 +99,11 @@ def plot_pixel_classification(pred_mask, true_mask):
     return result
 
 
-def create_mask(image, topo, type):
+def create_mask(gray_image, topo, type):
+    """
+    Create a binary mask from the topo and mask images.
+    Import gray_image, topo, and mask as numpy arrays.
+    """
 
     if type == 'raw':
         raw_topo_mask = np.where(topo > 0, 1, 0).astype('uint8')
@@ -113,7 +117,7 @@ def create_mask(image, topo, type):
 
     elif type == 'otsu':
         raw_topo_mask = np.where(topo > 0, 1, 0).astype('uint8')
-        thresholded_gray_image = cv2.threshold(image, 127, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+        thresholded_gray_image = cv2.threshold(gray_image, 127, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
         binary_otsu_mask = np.where(thresholded_gray_image > 0, 1, 0)
         binary_ice_mask = np.where((raw_topo_mask + binary_otsu_mask) > 1, 1, 0)
         close_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3))

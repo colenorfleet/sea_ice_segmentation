@@ -13,7 +13,7 @@ input_dict = {'Loss': ['Avg BCE Train Loss', 'Avg BCE Val Loss'],
 model_names = ['unet', 'deeplabv3plus', 'segformer']
 dataset_names = ['raw', 'morph', 'otsu']
 
-output_dir = '15_epoch_oct_10'
+output_dir = '15_epoch_oct_15'
 
 def view_training_statistics(model_name, dataset_name, metric='loss', save=False):
 
@@ -169,6 +169,80 @@ def view_training_statistics(model_name, dataset_name, metric='loss', save=False
             plt.close()
         else:
             plt.show()
+
+    
+    elif model_name == 'all' and dataset_name == 'all':
+        
+        unet_raw_stats = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/output/unet/raw/training_logs.csv')
+        unet_morph_stats = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/output/unet/morph/training_logs.csv')
+        unet_otsu_stats = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/output/unet/otsu/training_logs.csv')
+
+        deeplabv3plus_raw_stats = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/output/deeplabv3plus/raw/training_logs.csv')
+        deeplabv3plus_morph_stats = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/output/deeplabv3plus/morph/training_logs.csv')
+        deeplabv3plus_otsu_stats = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/output/deeplabv3plus/otsu/training_logs.csv')
+
+        segformer_raw_stats = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/output/segformer/raw/training_logs.csv')
+        segformer_morph_stats = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/output/segformer/morph/training_logs.csv')
+        segformer_otsu_stats = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/output/segformer/otsu/training_logs.csv')
+
+        data_length = len(unet_raw_stats['Avg BCE Train Loss'])
+
+        #unet_morph_stats.index += data_length
+        #unet_otsu_stats.index += data_length*2
+
+        #deeplabv3plus_morph_stats.index += data_length
+        #deeplabv3plus_otsu_stats.index += data_length*2
+
+        #segformer_morph_stats.index += data_length
+        #segformer_otsu_stats.index += data_length*2
+
+        unet_stats = pd.concat([unet_raw_stats, unet_morph_stats, unet_otsu_stats])
+        deeplabv3plus_stats = pd.concat([deeplabv3plus_raw_stats, deeplabv3plus_morph_stats, deeplabv3plus_otsu_stats])
+        segformer_stats = pd.concat([segformer_raw_stats, segformer_morph_stats, segformer_otsu_stats])
+
+        fig, axs = plt.subplots(1, 3, figsize=(15, 5), sharey=True)
+
+        axs[0].plot(unet_raw_stats[input_dict[metric][0]], label='U-Net training', color='tab:blue')
+        axs[0].plot(unet_raw_stats[input_dict[metric][1]], label='U-Net validation', color='tab:blue', linestyle='--')
+        axs[0].plot(deeplabv3plus_raw_stats[input_dict[metric][0]], label='DeepLabV3+ training', color='tab:orange')
+        axs[0].plot(deeplabv3plus_raw_stats[input_dict[metric][1]], label='DeepLabV3+ validation', color='tab:orange', linestyle='--')
+        axs[0].plot(segformer_raw_stats[input_dict[metric][0]], label='SegFormer training', color='tab:green')
+        axs[0].plot(segformer_raw_stats[input_dict[metric][1]], label='SegFormer validation', color='tab:green', linestyle='--')
+        axs[0].set_yscale('log')
+        axs[0].yaxis.grid(True, which='both')
+        axs[0].set_ylim(0.1, 1.5)
+        axs[0].set_ylabel(f'{metric}', size=14)
+        axs[0].set_title('Raw Dataset', size=14)
+
+
+        axs[1].plot(unet_morph_stats[input_dict[metric][0]], label='U-Net training', color='tab:blue')
+        axs[1].plot(unet_morph_stats[input_dict[metric][1]], label='U-Net validation', color='tab:blue', linestyle='--')
+        axs[1].plot(deeplabv3plus_morph_stats[input_dict[metric][0]], label='DeepLabV3+ training', color='tab:orange')
+        axs[1].plot(deeplabv3plus_morph_stats[input_dict[metric][1]], label='DeepLabV3+ validation', color='tab:orange', linestyle='--')
+        axs[1].plot(segformer_morph_stats[input_dict[metric][0]], label='SegFormer training', color='tab:green')
+        axs[1].plot(segformer_morph_stats[input_dict[metric][1]], label='SegFormer validation', color='tab:green', linestyle='--')
+        axs[1].set_yscale('log')
+        axs[1].yaxis.grid(True, which='both')
+        axs[1].set_ylim(0.1, 1.5)
+        axs[1].set_xlabel('Epoch', size=14)
+        axs[1].set_title('Morph Dataset', size=14)
+
+
+        axs[2].plot(unet_otsu_stats[input_dict[metric][0]], label='U-Net training', color='tab:blue')
+        axs[2].plot(unet_otsu_stats[input_dict[metric][1]], label='U-Net validation', color='tab:blue', linestyle='--')
+        axs[2].plot(deeplabv3plus_otsu_stats[input_dict[metric][0]], label='DeepLabV3+ training', color='tab:orange')
+        axs[2].plot(deeplabv3plus_otsu_stats[input_dict[metric][1]], label='DeepLabV3+ validation', color='tab:orange', linestyle='--')
+        axs[2].plot(segformer_otsu_stats[input_dict[metric][0]], label='SegFormer training', color='tab:green')
+        axs[2].plot(segformer_otsu_stats[input_dict[metric][1]], label='SegFormer validation', color='tab:green', linestyle='--')
+        axs[2].set_yscale('log')
+        axs[2].yaxis.grid(True, which='both')
+        axs[2].set_ylim(0.1, 1.5)
+        axs[2].legend(fontsize=12)
+        axs[2].set_title('Otsu Dataset', size=14)
+
+        plt.tight_layout()
+        plt.savefig(f'/home/cole/Pictures/thesis_report/training_statistics/{output_dir}/all_models_{metric}.png')
+
 
         
 

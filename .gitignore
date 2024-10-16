@@ -66,6 +66,7 @@ cv_output/
 all_dataset_output/
 labelled_output/
 all_dataset_labelled_output/
+512x512/
 
 *.pyc
 

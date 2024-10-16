@@ -14,11 +14,11 @@ from segmentation_models_pytorch import DeepLabV3Plus, Unet
 
 architecture = sys.argv[1]
 eval_dataset_name = sys.argv[2] # should be GoNorth or roboflow
-# train_dataset_name = sys.argv[3] # should be raw, morph, otsu 
+train_dataset_name = sys.argv[3] # should be raw, morph, otsu 
 
 print(f"Architecture: {architecture}")
 print(f"Eval Dataset: {eval_dataset_name}")
-# print(f"Train Dataset: {train_dataset_name}")
+print(f"Train Dataset: {train_dataset_name}")
 
 dataset_path = "/home/cole/Documents/NTNU/datasets/labelled"
 image_dir = os.path.join(dataset_path, eval_dataset_name, "images/")
@@ -53,8 +53,8 @@ elif architecture == 'deeplabv3plus':
 elif architecture == 'unet':
     model = Unet(encoder_name='resnet101', encoder_weights='imagenet', in_channels=3, classes=1)
 
-# data_directory = os.path.join('./output', architecture, train_dataset_name)
-data_directory = os.path.join('./all_dataset_output', architecture)
+data_directory = os.path.join('./output', architecture, train_dataset_name)
+# data_directory = os.path.join('./all_dataset_output', architecture)
 
 model.load_state_dict(torch.load(os.path.join(data_directory, "best_ice_seg_model.pth")))
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -62,8 +62,8 @@ model.to(device)
 
 criterion = torch.nn.BCEWithLogitsLoss(reduction='none')
 
-# test_data_output_dir = os.path.join("./all_dataset_labelled_output", architecture, eval_dataset_name, train_dataset_name)
-test_data_output_dir = os.path.join("./all_dataset_labelled_output", architecture, eval_dataset_name)
+test_data_output_dir = os.path.join("./all_dataset_labelled_output", architecture, eval_dataset_name, train_dataset_name)
+# test_data_output_dir = os.path.join("./all_dataset_labelled_output", architecture, eval_dataset_name)
 os.makedirs(test_data_output_dir, exist_ok=True)
 
 # Logging

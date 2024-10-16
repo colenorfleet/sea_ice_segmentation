@@ -43,14 +43,16 @@ dataset = craft_datasetdict(image_dir, label_dir, mask_dir, filename_split_dir)
 
 ADE_MEAN = [0.4685, 0.4731, 0.4766]
 ADE_STD = [0.2034, 0.1987, 0.1968]
-img_size = 512
+img_size = 256
 
 
 train_transform = A.Compose([
         A.Resize(width=img_size, height=img_size),
         A.HorizontalFlip(p=0.5),
         A.VerticalFlip(p=0.2),
-        A.RandomBrightnessContrast(p=0.2),
+        A.RandomBrightnessContrast(p=0.3),
+        A.RandomRotate90(p=0.2),
+        A.RandomToneCurve(scale=0.5, p=0.2),
         A.RandomResizedCrop(width=img_size, height=img_size, scale=(0.5,0.75), p=0.2),
         A.Normalize(mean=ADE_MEAN, std=ADE_STD),
         ], additional_targets={"lidar_mask": "mask"})
@@ -140,7 +142,7 @@ with open(csv_file, "w+", newline="") as f:
                 logits = outputs.logits
 
                 # Upsample
-                logits = torch.nn.functional.interpolate(logits, size=(512, 512), mode='bilinear', align_corners=False)
+                logits = torch.nn.functional.interpolate(logits, size=(logits.shape[2]*4, logits.shape[3]*4), mode='bilinear', align_corners=False)
 
             else:
                 logits = model(image)
