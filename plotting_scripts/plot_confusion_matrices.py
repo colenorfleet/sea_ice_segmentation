@@ -48,29 +48,24 @@ def plot_condusion_matrices(mode='predictions'):
 
             fig, ax = plt.subplots(1, 3, figsize=(15, 5), sharey=True)
 
-            sns.heatmap(raw_confusion_matrix/np.sum(raw_confusion_matrix), annot=True, fmt=".2%", cmap="Blues", cbar=False, ax=ax[0])
-            ax[0].set_title('Raw-trained')
-            # ax[0].set_xlabel('Predicted')
-            ax[0].set_ylabel('Labelled')
+            sns.heatmap(raw_confusion_matrix/np.sum(raw_confusion_matrix), annot=True, annot_kws={"size": 16}, fmt=".2%", cmap="Blues", cbar=False, ax=ax[0])
+            ax[0].set_title('Raw-trained', fontsize=18)
+            ax[0].set_ylabel('Labelled', fontsize=18)
 
-            sns.heatmap(morph_confusion_matrix/np.sum(morph_confusion_matrix), annot=True, fmt=".2%", cmap="Blues", cbar=False, ax=ax[1])
-            ax[1].set_title('Morph-trained')
-            ax[1].set_xlabel('Predicted')
-            # ax[1].set_ylabel('Actual')
+            sns.heatmap(morph_confusion_matrix/np.sum(morph_confusion_matrix), annot=True, annot_kws={"size": 16}, fmt=".2%", cmap="Blues", cbar=False, ax=ax[1])
+            ax[1].set_title('Morph-trained', fontsize=18)
+            ax[1].set_xlabel('Predicted', fontsize=18)
 
-            sns.heatmap(otsu_confusion_matrix/np.sum(otsu_confusion_matrix), annot=True, fmt=".2%", cmap="Blues", ax=ax[2])
-            ax[2].set_title('Otsu-trained')
-            # ax[2].set_xlabel('Predicted')
-            # ax[2].set_ylabel('Actual')
-            
+            sns.heatmap(otsu_confusion_matrix/np.sum(otsu_confusion_matrix), annot=True, annot_kws={"size": 16}, fmt=".2%", cmap="Blues", cbar=False, ax=ax[2])
+            ax[2].set_title('Otsu-trained', fontsize=18)
+
             plt.tight_layout()
-            # plt.show()
             plt.savefig(f'/home/cole/Pictures/thesis_report/test_set_statistics/confusion_matrices/{model}_prediction_confusion_matrices.png')
 
     elif mode == 'dataset_evaluation':
 
-        robowflow_df = pd.read_csv('/home/cole/Pictures/thesis_report/labelled_evaluation/labelled_metrics.csv')
-        gonorth_df = pd.read_csv('/home/cole/Pictures/thesis_report/labelled_evaluation/GoNorth_labelled_metrics.csv')
+        robowflow_df = pd.read_csv('/home/cole/Pictures/thesis_report/labelled_evaluation/dataset_eval/labelled_metrics.csv')
+        gonorth_df = pd.read_csv('/home/cole/Pictures/thesis_report/labelled_evaluation/dataset_eval/GoNorth_labelled_metrics.csv')
 
         df = pd.concat([robowflow_df, gonorth_df])
         df.set_index('Dataset', inplace=True)
@@ -85,20 +80,16 @@ def plot_condusion_matrices(mode='predictions'):
 
         fig, ax = plt.subplots(1, 3, figsize=(15, 5), sharey=True)
 
-        sns.heatmap(raw_confusion_matrix/np.sum(raw_confusion_matrix), annot=True, fmt=".2%", cmap="Blues", cbar=False, ax=ax[0])
-        ax[0].set_title('Raw Dataset')
-        # ax[0].set_xlabel('Preprocessed')
-        ax[0].set_ylabel('Labelled')
+        sns.heatmap(raw_confusion_matrix/np.sum(raw_confusion_matrix), annot=True, annot_kws={"size": 16}, fmt=".2%", cmap="Blues", cbar=False, ax=ax[0])
+        ax[0].set_title('Raw Dataset', fontsize=18)
+        ax[0].set_ylabel('Labelled', fontsize=18)
 
-        sns.heatmap(morph_confusion_matrix/np.sum(morph_confusion_matrix), annot=True, fmt=".2%", cmap="Blues", cbar=False, ax=ax[1])
-        ax[1].set_title('Morph Dataset')
-        ax[1].set_xlabel('Preprocessed')
-        # ax[1].set_ylabel('Labelled')
+        sns.heatmap(morph_confusion_matrix/np.sum(morph_confusion_matrix), annot=True, annot_kws={"size": 16}, fmt=".2%", cmap="Blues", cbar=False, ax=ax[1])
+        ax[1].set_title('Morph Dataset', fontsize=18)
+        ax[1].set_xlabel('Preprocessed', fontsize=18)
 
-        sns.heatmap(otsu_confusion_matrix/np.sum(otsu_confusion_matrix), annot=True, fmt=".2%", cmap="Blues", ax=ax[2])
-        ax[2].set_title('Otsu Dataset')
-        # ax[2].set_xlabel('Preprocessed')
-        # ax[2].set_ylabel('Labelled')
+        sns.heatmap(otsu_confusion_matrix/np.sum(otsu_confusion_matrix), annot=True, annot_kws={"size": 16}, fmt=".2%", cmap="Blues", cbar=False, ax=ax[2])
+        ax[2].set_title('Otsu Dataset', fontsize=18)
 
         plt.tight_layout()
         # plt.show() 

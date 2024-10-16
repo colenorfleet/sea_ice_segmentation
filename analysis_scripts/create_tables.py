@@ -10,7 +10,7 @@ output_path = '/home/cole/Pictures/thesis_report/tables/'
 
 def create_tables(mode='evaluation_model'):
 
-    dir_path = '/home/cole/Documents/NTNU/sea_ice_segmentation/'
+    dir_path = '/home/cole/Documents/NTNU/sea_ice_segmentation'
     models = ['unet', 'deeplabv3plus', 'segformer']
     datasets = ['raw', 'morph', 'otsu']
 
@@ -298,7 +298,7 @@ def create_tables(mode='evaluation_model'):
     elif mode=='labelled_evaluation':
         
         csv_file = os.path.abspath(os.path.join(output_path, "labelled_dataset_performance_{}.csv".format(date.today())))
-        csv_header = ['Subset', 'Model', 'Dataset', 'IOU', 'DICE', 'Pixel Accuracy', 'Precision', 'Recall', 'Number True Positive', 'Number False Positive', 'Number True Negative', 'Number False Negative', 'SIC Manual', 'SIC Processed']
+        csv_header = ['Subset', 'Model', 'Dataset', 'IOU', 'fIOU', 'DICE', 'Pixel Accuracy', 'Precision', 'Recall', 'Number True Positive', 'Number False Positive', 'Number True Negative', 'Number False Negative', 'SIC Manual', 'SIC Processed']
 
         with open(csv_file, mode='w') as file:
             csv_writer = csv.writer(file)
@@ -320,6 +320,7 @@ def create_tables(mode='evaluation_model'):
                                 model,
                                 dataset,
                                 f"{avgs['IOU']:0.2f}",
+                                f"{avgs['Full IOU']:0.2f}",
                                 f"{avgs['DICE']:0.2f}",
                                 f"{avgs['Pixel Accuracy']:0.2f}",
                                 f"{avgs['Precision']:0.2f}",
@@ -334,6 +335,7 @@ def create_tables(mode='evaluation_model'):
                         )
 
     elif mode=='all_dataset_labelled_evaluation':
+        # This was for models trained on all datasets I guess
     
         csv_file = os.path.abspath(os.path.join(output_path, "all_dataset_labelled_performance_{}.csv".format(date.today())))
         csv_header = ['Subset', 'Model', 'IOU', 'DICE', 'Pixel Accuracy', 'Precision', 'Recall', 'Number True Positive', 'Number False Positive', 'Number True Negative', 'Number False Negative', 'SIC Manual', 'SIC Processed']

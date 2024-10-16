@@ -6,8 +6,8 @@ import csv
 
 
 output_path = '/home/cole/Pictures/thesis_report/labelled_evaluation'
-GoNorth = pd.read_csv(os.path.join(output_path, 'GoNorth_labelled_metrics.csv'))
-Roboflow = pd.read_csv(os.path.join(output_path, 'labelled_metrics.csv'))
+GoNorth = pd.read_csv(os.path.join(output_path, 'dataset_eval/GoNorth_labelled_metrics.csv'))
+Roboflow = pd.read_csv(os.path.join(output_path, 'dataset_eval/labelled_metrics.csv'))
 
 df_dict = {'GoNorth': GoNorth, 'Roboflow': Roboflow}
 

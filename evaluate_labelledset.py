@@ -13,7 +13,7 @@ from utils.plotting_utils import save_segmentation_image
 from segmentation_models_pytorch import DeepLabV3Plus, Unet
 
 architecture = sys.argv[1]
-eval_dataset_name = sys.argv[2] # should be GoNorth or roboflow
+eval_dataset_name = sys.argv[2] # should be goNorth or roboflow
 train_dataset_name = sys.argv[3] # should be raw, morph, otsu 
 
 print(f"Architecture: {architecture}")
@@ -29,7 +29,7 @@ dataset = craft_labelled_dataset(image_dir, label_dir, mask_dir)
 
 ADE_MEAN = [0.4685, 0.4731, 0.4766]
 ADE_STD = [0.2034, 0.1987, 0.1968]
-img_size = 512
+img_size = 256
 
 val_transform = A.Compose([
         A.Resize(width=img_size, height=img_size),
@@ -62,7 +62,7 @@ model.to(device)
 
 criterion = torch.nn.BCEWithLogitsLoss(reduction='none')
 
-test_data_output_dir = os.path.join("./all_dataset_labelled_output", architecture, eval_dataset_name, train_dataset_name)
+test_data_output_dir = os.path.join("./labelled_output", architecture, eval_dataset_name, train_dataset_name)
 # test_data_output_dir = os.path.join("./all_dataset_labelled_output", architecture, eval_dataset_name)
 os.makedirs(test_data_output_dir, exist_ok=True)
 
@@ -73,6 +73,7 @@ csv_header = [
     "BCE Loss",
     "Total BCE Loss",
     "IOU",
+    "Full IOU",
     "DICE",
     "Pixel Accuracy",
     "Precision",
@@ -108,7 +109,7 @@ with open(csv_file, "w", newline="") as f:
                 logits = outputs.logits
 
                 # Upsample
-                logits = torch.nn.functional.interpolate(logits, size=(512, 512), mode='bilinear', align_corners=False)
+                logits = torch.nn.functional.interpolate(logits, size=(logits.shape[2]*4, logits.shape[3]*4), mode='bilinear', align_corners=False)
 
             else:
                 logits = model(image)
@@ -121,7 +122,7 @@ with open(csv_file, "w", newline="") as f:
 
             # calculate metrics
             pred_mask = torch.where(logits > 0.5, 1, 0)
-            iou, dice, pixel_accuracy, precision, recall, num_TP, num_FP, num_TN, num_FN = calculate_metrics(pred_mask, label, mask)
+            iou, full_iou, dice, pixel_accuracy, precision, recall, num_TP, num_FP, num_TN, num_FN = calculate_metrics(pred_mask, label, mask)
             sic_label = calc_SIC(label, mask)
             sic_pred = calc_SIC(pred_mask, mask)
 
@@ -130,6 +131,7 @@ with open(csv_file, "w", newline="") as f:
                  mean_loss.item(),
                  unmasked_mean_loss.item(),
                  iou,
+                 full_iou,
                  dice,
                  pixel_accuracy,
                  precision,
@@ -143,7 +145,7 @@ with open(csv_file, "w", newline="") as f:
                  )
             
             # save image
-            save_segmentation_image(batch['original_image'], label, pred_mask, filename, test_data_output_dir)
+            save_segmentation_image(batch['original_image'], label, pred_mask, mask, filename, test_data_output_dir)
 
 
 

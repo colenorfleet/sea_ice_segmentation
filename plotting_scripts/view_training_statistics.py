@@ -241,8 +241,11 @@ def view_training_statistics(model_name, dataset_name, metric='loss', save=False
         axs[2].set_title('Otsu Dataset', size=14)
 
         plt.tight_layout()
-        plt.savefig(f'/home/cole/Pictures/thesis_report/training_statistics/{output_dir}/all_models_{metric}.png')
-
+        if save == 'True':
+            plt.savefig(f'/home/cole/Pictures/thesis_report/training_statistics/{output_dir}/all_models_{metric}.png')
+            plt.close()
+        else:
+            plt.show()
 
         
 

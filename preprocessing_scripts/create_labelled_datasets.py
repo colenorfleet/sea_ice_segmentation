@@ -34,6 +34,8 @@ for file in og_imgs:
 overlap = set([file.split('.')[0] for file in goNorth_imgs]).intersection(set(traj_dict.keys()))
 overlap_roboflow = set(roboflow_dict.keys()).intersection(set(traj_dict.keys()))
 
+img_size = 256
+
 # resize and save roboflow
 print('Saving roboflow')
 for img in tqdm(overlap_roboflow):
@@ -43,6 +45,10 @@ for img in tqdm(overlap_roboflow):
 
     lidar_mask = cv2.imread(os.path.join(datasets_dir, 'lidar_masks', img + '.' + traj_dict[img] + '.png'), cv2.IMREAD_GRAYSCALE)
     lidar_mask = np.where(lidar_mask>0, 1, 0).astype('uint8')
+
+    lidar_mask = cv2.resize(lidar_mask, (img_size,img_size), interpolation=cv2.INTER_NEAREST)
+    mask = cv2.resize(mask, (img_size,img_size), interpolation=cv2.INTER_NEAREST)
+    image = cv2.resize(image, (img_size,img_size), interpolation=cv2.INTER_NEAREST)
 
     assert np.all((lidar_mask==0) | (lidar_mask==1)), 'lidar is not binary'
     assert np.all((mask==0) | (mask==1)), 'roboflow mask is not binary'
@@ -72,9 +78,9 @@ for img in tqdm(overlap):
     lidar_crop = lidar_mask.crop((left, top, right, bottom))
     lidar_crop = np.array(lidar_crop).astype('uint8')
 
-    lidar_crop = cv2.resize(lidar_crop, (512,512), interpolation=cv2.INTER_NEAREST)
-    mask = cv2.resize(mask, (512,512), interpolation=cv2.INTER_NEAREST)
-    image = cv2.resize(image, (512,512), interpolation=cv2.INTER_NEAREST)
+    lidar_crop = cv2.resize(lidar_crop, (img_size,img_size), interpolation=cv2.INTER_NEAREST)
+    mask = cv2.resize(mask, (img_size,img_size), interpolation=cv2.INTER_NEAREST)
+    image = cv2.resize(image, (img_size,img_size), interpolation=cv2.INTER_NEAREST)
 
     assert np.all((lidar_crop==0) | (lidar_crop==1)), 'lidar is not binary'
     assert np.all((mask==0) | (mask==1)), 'goNorth mask is not binary'

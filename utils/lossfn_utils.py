@@ -42,6 +42,9 @@ def calculate_metrics(pred_mask: Any, true_mask: Any, lidar_mask: Any) -> torch.
     assert torch.all((pred_mask==0) | (pred_mask==1)), "pred_mask must be binary"
     assert torch.all((true_mask==0) | (true_mask==1)), "true_mask must be binary"
     assert torch.all((lidar_mask==0) | (lidar_mask==1)), "lidar_mask must be binary"
+
+    full_pred_mask = pred_mask
+    full_true_mask = true_mask
     
     # include LiDAR mask in computation
     valid_lidar_mask = (lidar_mask == 1)
@@ -52,10 +55,13 @@ def calculate_metrics(pred_mask: Any, true_mask: Any, lidar_mask: Any) -> torch.
     true_mask = true_mask.float()
 
     intersection = torch.sum(pred_mask * true_mask)
+    full_intersection = torch.sum(full_pred_mask * full_true_mask)
     union = torch.sum((pred_mask + true_mask) > 0.5)
+    full_union = torch.sum((full_pred_mask + full_true_mask) > 0.5)
 
     # Add a small epsilon to the denominator to avoid division by zero
     iou = (intersection + SMOOTH) / (union + SMOOTH)
+    full_iou = (full_intersection + SMOOTH) / (full_union + SMOOTH)
     dice_score = (2 * intersection + SMOOTH) / (
         torch.sum(pred_mask) + torch.sum(true_mask) + SMOOTH
     )
@@ -73,7 +79,7 @@ def calculate_metrics(pred_mask: Any, true_mask: Any, lidar_mask: Any) -> torch.
     recall = num_TP.float() / (num_TP.float() + num_FN.float() + SMOOTH)
     f1_score = 2 * (precision * recall) / (precision + recall + SMOOTH)
 
-    return iou.item(), dice_score.item(), pixel_accuracy.item(), precision.item(), recall.item(), num_TP.item(), num_FP.item(), num_TN.item(), num_FN.item()
+    return iou.item(), full_iou.item(), dice_score.item(), pixel_accuracy.item(), precision.item(), recall.item(), num_TP.item(), num_FP.item(), num_TN.item(), num_FN.item()
 
 def quick_metrics(pred_mask: Any, true_mask: Any, lidar_mask: Any) -> torch.Tensor:
 

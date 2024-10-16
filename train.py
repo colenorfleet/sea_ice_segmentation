@@ -197,7 +197,7 @@ with open(csv_file, "w+", newline="") as f:
                     outputs = model(pixel_values=image)
                     logits = outputs.logits
                     # Upsample
-                    logits = torch.nn.functional.interpolate(logits, size=(512, 512), mode='bilinear', align_corners=False)
+                    logits = torch.nn.functional.interpolate(logits, size=(logits.shape[2]*4, logits.shape[3]*4), mode='bilinear', align_corners=False)
                 else:
                     logits = model(image)
 
