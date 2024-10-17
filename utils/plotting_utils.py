@@ -15,17 +15,10 @@ def save_segmentation_image(image, target, prediction, lidar_mask, filename, img
     prediction = prediction.squeeze().detach().cpu().numpy()
     lidar_mask = lidar_mask.squeeze().detach().cpu().numpy()
 
-    pixel_classification = plot_pixel_classification(prediction, target, lidar_mask)
-
-    # lidar_mask = np.where(lidar_mask==0, 1, 0).astype(np.uint8)
-    # lidar_mask = np.stack((lidar_mask*255, lidar_mask*255, lidar_mask*255), axis=-1)
+    pixel_classification = plot_pixel_classification(prediction, target)
 
     target_img = (target * 255).astype(np.uint8)
     prediction_img = (prediction * 255).astype(np.uint8)
-    #target_img = cv2.addWeighted(target_img, 1, lidar_mask, 0.5, 0)
-    #prediction_img = cv2.addWeighted(prediction_img, 1, lidar_mask, 0.5, 0)
-    target_img[(target_img==255) & (lidar_mask==0)] = 128
-    prediction_img[(prediction_img==255) & (lidar_mask==0)] = 128
 
     # save prediction image
     prediction_path = os.path.join(img_output_path, 'prediction')
@@ -33,6 +26,9 @@ def save_segmentation_image(image, target, prediction, lidar_mask, filename, img
     os.makedirs(prediction_path, exist_ok=True)
     os.makedirs(comparison_path, exist_ok=True)
     cv2.imwrite(os.path.join(prediction_path, filename[0] + ".png"), prediction_img)
+
+    target_img[(target_img==255) & (lidar_mask==0)] = 128
+    prediction_img[(prediction_img==255) & (lidar_mask==0)] = 128
 
     # 
 

@@ -333,6 +333,33 @@ def create_tables(mode='evaluation_model'):
                                 f"{avgs['SIC Pred']:0.2f}"
                             ]
                         )
+            for model in models:
+                for dataset in datasets:
+                    df_roboflow = pd.read_csv(f'{dir_path}/labelled_output/{model}/roboflow/{dataset}/evaluation_scores.csv')
+                    df_goNorth = pd.read_csv(f'{dir_path}/labelled_output/{model}/goNorth/{dataset}/evaluation_scores.csv')
+                    df_both = pd.concat([df_roboflow, df_goNorth])
+
+                    both_avgs = df_both.mean().round(2)
+
+                    csv_writer.writerow(
+                                [
+                                    'Combined',
+                                    model,
+                                    dataset,
+                                    f"{both_avgs['IOU']:0.2f}",
+                                    f"{both_avgs['Full IOU']:0.2f}",
+                                    f"{both_avgs['DICE']:0.2f}",
+                                    f"{both_avgs['Pixel Accuracy']:0.2f}",
+                                    f"{both_avgs['Precision']:0.2f}",
+                                    f"{both_avgs['Recall']:0.2f}",
+                                    int(both_avgs['Number True Positive']),
+                                    int(both_avgs['Number False Positive']),
+                                    int(both_avgs['Number True Negative']),
+                                    int(both_avgs['Number False Negative']),
+                                    f"{both_avgs['SIC Label']:0.2f}",
+                                    f"{both_avgs['SIC Pred']:0.2f}"
+                                ]
+                            )
 
     elif mode=='all_dataset_labelled_evaluation':
         # This was for models trained on all datasets I guess

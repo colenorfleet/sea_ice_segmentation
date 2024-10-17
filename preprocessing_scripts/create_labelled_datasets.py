@@ -90,13 +90,3 @@ for img in tqdm(overlap):
     cv2.imwrite(os.path.join(gonorth_output, 'lidar_masks', img + '.png'), lidar_crop*255)
 
 
-
-    
-
-
-
-
-
-    
-
-    

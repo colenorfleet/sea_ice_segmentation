@@ -48,3 +48,27 @@ with open(csv_file, mode='w') as file:
                 sic_manual,
                 sic_processed
             ])
+
+    for dataset in ['raw', 'morph', 'otsu']:
+
+        df_both = pd.concat([GoNorth, Roboflow])
+
+        iou = df_both.loc[dataset, 'IOU'].mean().round(2)
+        dice = df_both.loc[dataset, 'DICE'].mean().round(2)
+        pixel_acc = df_both.loc[dataset, 'Pixel Accuracy'].mean().round(2)
+        precision = df_both.loc[dataset, 'Precision'].mean().round(2)
+        recall = df_both.loc[dataset, 'Recall'].mean().round(2)
+        sic_manual = df_both.loc[dataset, 'SIC Manual'].mean().round(2)
+        sic_processed = df_both.loc[dataset, 'SIC Processed'].mean().round(2)
+
+        csv_writer.writerow([
+            'Combined', 
+            dataset,
+            iou,
+            dice,
+            pixel_acc,
+            precision,
+            recall,
+            sic_manual,
+            sic_processed
+        ])
