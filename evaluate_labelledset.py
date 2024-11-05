@@ -86,17 +86,16 @@ csv_header = [
     "SIC Pred",
 ]
 
-model.eval()
-
 with open(csv_file, "w", newline="") as f:
     csv_writer = csv.writer(f)
     csv_writer.writerow(csv_header)
 
     with torch.no_grad():
         
-        test_dataloader = tqdm(test_dataloader, desc="Evaluation", unit="image")
+        model.eval()      
+        test_dataloader_tqdm = tqdm(test_dataloader, desc="Evaluation", unit="image")
 
-        for idx, batch in enumerate(test_dataloader):
+        for idx, batch in enumerate(test_dataloader_tqdm):
 
             image = batch["image"].to(device)
             label = batch["label"].to(device)
@@ -116,12 +115,14 @@ with open(csv_file, "w", newline="") as f:
 
             logits = logits.squeeze(1)
             loss = criterion(logits, label.float())
-            unmasked_mean_loss = loss.sum() / (img_size * img_size)
+            epsilon = 1e-8
+            unmasked_mean_loss = loss.sum() / ((img_size * img_size) + epsilon)
             loss = loss * mask
-            mean_loss = loss.sum() / mask.sum()
+            mean_loss = loss.sum() / (mask.sum() + epsilon)
 
             # calculate metrics
-            pred_mask = torch.where(logits > 0.5, 1, 0)
+            probabilities = torch.sigmoid(logits)
+            pred_mask = (probabilities > 0.5).float()
             iou, full_iou, dice, pixel_accuracy, precision, recall, num_TP, num_FP, num_TN, num_FN = calculate_metrics(pred_mask, label, mask)
             sic_label = calc_SIC(label, mask)
             sic_pred = calc_SIC(pred_mask, mask)

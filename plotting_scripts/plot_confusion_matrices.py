@@ -11,16 +11,30 @@ def plot_condusion_matrices(mode='predictions'):
 
     if mode == 'predictions':
 
-        for model in ['unet', 'deeplabv3plus', 'segformer']:
+        # for model in ['unet', 'deeplabv3plus', 'segformer']:
+        for model in ['optimized']:
 
-            raw_roboflow = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/labelled_output/{model}/roboflow/raw/evaluation_scores.csv')
-            raw_gonorth = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/labelled_output/{model}/goNorth/raw/evaluation_scores.csv')
+            if model == 'optimized':
+                raw_roboflow = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/labelled_output/deeplabv3plus/roboflow/raw/evaluation_scores.csv')
+                raw_gonorth = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/labelled_output/deeplabv3plus/goNorth/raw/evaluation_scores.csv')
 
-            morph_roboflow = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/labelled_output/{model}/roboflow/morph/evaluation_scores.csv')
-            morph_gonorth = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/labelled_output/{model}/goNorth/morph/evaluation_scores.csv')
+                morph_roboflow = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/labelled_output/unet/roboflow/morph/evaluation_scores.csv')
+                morph_gonorth = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/labelled_output/unet/goNorth/morph/evaluation_scores.csv')
 
-            otsu_roboflow = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/labelled_output/{model}/roboflow/otsu/evaluation_scores.csv')
-            otsu_gonorth = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/labelled_output/{model}/goNorth/otsu/evaluation_scores.csv')
+                otsu_roboflow = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/labelled_output/segformer/roboflow/otsu/evaluation_scores.csv')
+                otsu_gonorth = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/labelled_output/segformer/goNorth/otsu/evaluation_scores.csv')
+
+            else:
+
+                raw_roboflow = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/labelled_output/{model}/roboflow/raw/evaluation_scores.csv')
+                raw_gonorth = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/labelled_output/{model}/goNorth/raw/evaluation_scores.csv')
+
+                morph_roboflow = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/labelled_output/{model}/roboflow/morph/evaluation_scores.csv')
+                morph_gonorth = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/labelled_output/{model}/goNorth/morph/evaluation_scores.csv')
+
+                otsu_roboflow = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/labelled_output/{model}/roboflow/otsu/evaluation_scores.csv')
+                otsu_gonorth = pd.read_csv(f'/home/cole/Documents/NTNU/sea_ice_segmentation/labelled_output/{model}/goNorth/otsu/evaluation_scores.csv')
+
 
             raw_both = pd.concat([raw_roboflow, raw_gonorth])
             morph_both = pd.concat([morph_roboflow, morph_gonorth])
@@ -60,7 +74,8 @@ def plot_condusion_matrices(mode='predictions'):
             ax[2].set_title('Otsu-trained', fontsize=18)
 
             plt.tight_layout()
-            plt.savefig(f'/home/cole/Pictures/thesis_report/test_set_statistics/confusion_matrices/{model}_prediction_confusion_matrices.png')
+            plt.show()
+            # plt.savefig(f'/home/cole/Pictures/thesis_report/test_set_statistics/confusion_matrices/{model}_prediction_confusion_matrices.png')
 
     elif mode == 'dataset_evaluation':
 

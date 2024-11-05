@@ -39,20 +39,20 @@ class DiceLoss(nn.Module):
 def calculate_metrics(pred_mask: Any, true_mask: Any, lidar_mask: Any) -> torch.Tensor:
     SMOOTH=1e-8
 
-    assert torch.all((pred_mask==0) | (pred_mask==1)), "pred_mask must be binary"
-    assert torch.all((true_mask==0) | (true_mask==1)), "true_mask must be binary"
-    assert torch.all((lidar_mask==0) | (lidar_mask==1)), "lidar_mask must be binary"
+    true_mask = true_mask.float()
+    lidar_mask = lidar_mask.float()
+
+    assert torch.all((pred_mask==0.0) | (pred_mask==1.0)), "pred_mask must be binary"
+    assert torch.all((true_mask==0.0) | (true_mask==1.0)), "true_mask must be binary"
+    assert torch.all((lidar_mask==0.0) | (lidar_mask==1.0)), "lidar_mask must be binary"
 
     full_pred_mask = pred_mask
     full_true_mask = true_mask
     
     # include LiDAR mask in computation
-    valid_lidar_mask = (lidar_mask == 1)
+    valid_lidar_mask = (lidar_mask == 1.0)
     pred_mask = pred_mask[valid_lidar_mask]
     true_mask = true_mask[valid_lidar_mask]
-
-    pred_mask = pred_mask.float()
-    true_mask = true_mask.float()
 
     intersection = torch.sum(pred_mask * true_mask)
     full_intersection = torch.sum(full_pred_mask * full_true_mask)
@@ -82,20 +82,19 @@ def calculate_metrics(pred_mask: Any, true_mask: Any, lidar_mask: Any) -> torch.
     return iou.item(), full_iou.item(), dice_score.item(), pixel_accuracy.item(), precision.item(), recall.item(), num_TP.item(), num_FP.item(), num_TN.item(), num_FN.item()
 
 def quick_metrics(pred_mask: Any, true_mask: Any, lidar_mask: Any) -> torch.Tensor:
+    SMOOTH=1e-8
 
-    pred_mask = torch.where(pred_mask > 0.5, 1, 0)
+    true_mask = true_mask.float()
+    lidar_mask = lidar_mask.float()
 
-    assert torch.all((pred_mask==0) | (pred_mask==1)), "pred_mask must be binary"
-    assert torch.all((true_mask==0) | (true_mask==1)), "true_mask must be binary"
-    assert torch.all((lidar_mask==0) | (lidar_mask==1)), "lidar_mask must be binary"
+    assert torch.all((pred_mask==0.0) | (pred_mask==1.0)), "pred_mask must be binary"
+    assert torch.all((true_mask==0.0) | (true_mask==1.0)), "true_mask must be binary"
+    assert torch.all((lidar_mask==0.0) | (lidar_mask==1.0)), "lidar_mask must be binary"
 
     # include LiDAR mask in computation
-    valid_lidar_mask = (lidar_mask == 1)
+    valid_lidar_mask = (lidar_mask == 1.0)
     pred_mask = pred_mask[valid_lidar_mask]
     true_mask = true_mask[valid_lidar_mask]
-    
-    pred_mask = pred_mask.float()
-    true_mask = true_mask.float()
 
     intersection = torch.sum(pred_mask * true_mask)
     union = torch.sum((pred_mask + true_mask) > 0.5)
@@ -122,6 +121,9 @@ def quick_metrics(pred_mask: Any, true_mask: Any, lidar_mask: Any) -> torch.Tens
 
 def calc_SIC(label, lidar_mask):
 
+    assert torch.all((label==0) | (label==1)), "true_mask must be binary"
+    assert torch.all((lidar_mask==0) | (lidar_mask==1)), "lidar_mask must be binary"
+
     # SIC = # of ice pixels / total # of pixels in LiDAR mask
     img_size = label.size()[1] * label.size()[2]
     label = label[lidar_mask==1]
@@ -132,6 +134,20 @@ def calc_SIC(label, lidar_mask):
     # find # of ice pixels
     ice_pixels = torch.sum(label)
     sic_lidar = (ice_pixels / total_pixels)
+
+    return sic_lidar.item()
+
+def calc_SIC_rev(label, lidar_mask):
+    assert torch.all((label==0) | (label==1)), "label must be binary"
+    assert torch.all((lidar_mask==0) | (lidar_mask==1)), "lidar_mask must be binary"
+
+    total_pixels = torch.sum(lidar_mask)
+
+    if total_pixels == 0:
+        return float('nan')  # Handle division by zero appropriately
+
+    ice_pixels = torch.sum(label * lidar_mask)
+    sic_lidar = ice_pixels / total_pixels
 
     return sic_lidar.item()
 

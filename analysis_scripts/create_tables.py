@@ -360,6 +360,41 @@ def create_tables(mode='evaluation_model'):
                                     f"{both_avgs['SIC Pred']:0.2f}"
                                 ]
                             )
+    elif mode=='labelled_evaluation_model_comp':
+        
+        csv_file = os.path.abspath(os.path.join(output_path, "labelled_dataset_by_model_performance_{}.csv".format(date.today())))
+        csv_header = ['Dataset', 'Model', 'IOU', 'fIOU', 'DICE', 'Pixel Accuracy', 'Precision', 'Recall', 'Number True Positive', 'Number False Positive', 'Number True Negative', 'Number False Negative', 'SIC Manual', 'SIC Processed']
+
+        with open(csv_file, mode='w') as file:
+            csv_writer = csv.writer(file)
+            csv_writer.writerow(csv_header)
+
+            for dataset in datasets:
+                for model in models:
+                    df_roboflow = pd.read_csv(f'{dir_path}/labelled_output/{model}/roboflow/{dataset}/evaluation_scores.csv')
+                    df_goNorth = pd.read_csv(f'{dir_path}/labelled_output/{model}/goNorth/{dataset}/evaluation_scores.csv')
+                    df_both = pd.concat([df_roboflow, df_goNorth])
+
+                    both_avgs = df_both.mean().round(2)
+
+                    csv_writer.writerow(
+                                [
+                                    dataset,
+                                    model,
+                                    f"{both_avgs['IOU']:0.2f}",
+                                    f"{both_avgs['Full IOU']:0.2f}",
+                                    f"{both_avgs['DICE']:0.2f}",
+                                    f"{both_avgs['Pixel Accuracy']:0.2f}",
+                                    f"{both_avgs['Precision']:0.2f}",
+                                    f"{both_avgs['Recall']:0.2f}",
+                                    int(both_avgs['Number True Positive']),
+                                    int(both_avgs['Number False Positive']),
+                                    int(both_avgs['Number True Negative']),
+                                    int(both_avgs['Number False Negative']),
+                                    f"{both_avgs['SIC Label']:0.2f}",
+                                    f"{both_avgs['SIC Pred']:0.2f}"
+                                ]
+                            )
 
     elif mode=='all_dataset_labelled_evaluation':
         # This was for models trained on all datasets I guess
